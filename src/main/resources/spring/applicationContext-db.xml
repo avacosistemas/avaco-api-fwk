@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans
+	xmlns:beans="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns="http://www.springframework.org/schema/context"
+	xmlns:jpa="http://www.springframework.org/schema/data/jpa"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+									http://www.springframework.org/schema/beans/spring-beans.xsd
+									http://www.springframework.org/schema/context 
+									http://www.springframework.org/schema/context/spring-context.xsd
+								    http://www.springframework.org/schema/tx
+							        http://www.springframework.org/schema/tx/spring-tx-4.3.xsd
+							        http://www.springframework.org/schema/data/jpa 
+							        http://www.springframework.org/schema/data/jpa/spring-jpa-1.0.xsd
+							        http://www.springframework.org/schema/jdbc 
+							        http://www.springframework.org/schema/jdbc/spring-jdbc.xsd
+							        http://www.springframework.org/schema/util
+							        http://www.springframework.org/schema/util/spring-util.xsd">
+
+	<tx:annotation-driven />
+
+	<beans:bean
+		class="org.springframework.context.support.PropertySourcesPlaceholderConfigurer">
+		<beans:property name="locations">
+			<beans:list>
+				<beans:value>file:${catalina.home}/conf/config-fwk.properties</beans:value>
+			</beans:list>
+		</beans:property>
+		<beans:property name="fileEncoding" value="UTF-8" />
+	</beans:bean>
+
+	<util:map id="dataSourceMap">
+		<beans:entry key="DB_DRIVERCLASSNAME"
+			value="${DB_DRIVERCLASSNAME}" />
+		<beans:entry key="DB_DIALECT" value="${DB_DIALECT}" />
+		<beans:entry key="DB_USERNAME" value="${DB_USERNAME}" />
+		<beans:entry key="DB_PASSWORD" value="${DB_PASSWORD}" />
+		<beans:entry key="DB_URL" value="${DB_URL}" />
+	</util:map>
+
+	<beans:bean id="transactionManager"
+		class="org.springframework.orm.jpa.JpaTransactionManager">
+		<beans:property name="entityManagerFactory"
+			ref="entityManagerFactory" />
+		<beans:property name="jpaDialect">
+			<beans:bean
+				class="org.springframework.orm.jpa.vendor.HibernateJpaDialect" />
+		</beans:property>
+	</beans:bean>
+
+	<beans:bean id="secSF"
+		class="org.springframework.orm.jpa.vendor.HibernateJpaSessionFactoryBean">
+		<beans:property name="entityManagerFactory"
+			ref="entityManagerFactory" />
+	</beans:bean>
+
+</beans:beans>

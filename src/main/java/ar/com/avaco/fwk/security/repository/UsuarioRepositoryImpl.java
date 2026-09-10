@@ -1,0 +1,105 @@
+package ar.com.avaco.fwk.security.repository;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.persistence.EntityManager;
+
+import org.hibernate.Criteria;
+import org.hibernate.Hibernate;
+import org.hibernate.criterion.MatchMode;
+import org.hibernate.criterion.Order;
+import org.hibernate.criterion.Projections;
+import org.hibernate.criterion.Restrictions;
+import org.hibernate.transform.Transformers;
+import org.springframework.stereotype.Repository;
+
+import ar.com.avaco.fwk.core.component.repository.NJBaseRepository;
+import ar.com.avaco.fwk.security.domain.Usuario;
+
+@Repository("usuarioRepository")
+public class UsuarioRepositoryImpl extends NJBaseRepository<Long, Usuario> implements UsuarioRepository {
+
+	protected UsuarioRepositoryImpl(EntityManager em) {
+		super(Usuario.class, em);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public List<Usuario> getExternalUsersLike(String userLess, String userlike) {
+		Criteria c = this.getCurrentSession().createCriteria(this.getHandledClass());
+		c.add(Restrictions.eq("interno", false));
+		c.add(Restrictions.ne("username", userLess));
+		c.add(Restrictions.like("username", userlike, MatchMode.START));
+		return c.list();
+	}
+
+	@Override
+	protected void initialize(Usuario entity) {
+		Hibernate.initialize(entity.getAccesos());
+		entity.getAccesos();
+	}
+
+	@Override
+	public List<Usuario> listUsuariosParaImpersonar(Usuario usuario) {
+		usuario = (Usuario) getCurrentSession().load(this.getHandledClass(), usuario.getId());
+		return new ArrayList<Usuario>(usuario.getImpersonables());
+	}
+
+	@SuppressWarnings("unchecked")
+	public List<Usuario> getAllOnlyIdUsernameAndName() {
+		Criteria c = this.getCurrentSession().createCriteria(this.getHandledClass());
+
+		c.setProjection(Projections.projectionList().add(Projections.property("id"), "id")
+				.add(Projections.property("username"), "username").add(Projections.property("nombre"), "nombre")
+				.add(Projections.property("apellido"), "apellido"));
+
+		c.addOrder(Order.asc("nombre")).addOrder(Order.asc("apellido"));
+
+		c.setResultTransformer(Transformers.aliasToBean(this.getHandledClass()));
+
+		return c.list();
+	}
+
+	@Override
+	public Usuario findByUsername(String username) {
+		Criteria c = this.getCurrentSession().createCriteria(this.getHandledClass());
+		c.add(Restrictions.eq("username", username));
+		return (Usuario) c.uniqueResult();
+	}
+
+	@Override
+	public Usuario findByEmail(String email) {
+		Criteria c = this.getCurrentSession().createCriteria(this.getHandledClass());
+		c.add(Restrictions.eq("email", email));
+		return (Usuario) c.uniqueResult();
+	}
+
+	@Override
+	public boolean isUserExistWithEmail(String email) {
+		Criteria c = this.getCurrentSession().createCriteria(this.getHandledClass());
+		c.add(Restrictions.eq("email", email));
+		return c.uniqueResult() != null;
+	}
+
+	@Override
+	public List<Usuario> findByLegajoIn(List<String> legajos) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Usuario findByLegajo(int legajo) {
+		Criteria c = this.getCurrentSession().createCriteria(this.getHandledClass());
+		c.add(Restrictions.eq("legajo", legajo));
+		return (Usuario) c.uniqueResult();
+	}
+
+	@Override
+	public List<Usuario> findByIdIn(List<Long> lista) {
+		Criteria c = this.getCurrentSession().createCriteria(this.getHandledClass());
+		c.add(Restrictions.in("id", lista));
+		return c.list();
+	}
+
+}

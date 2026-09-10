@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans
+	xmlns="http://www.springframework.org/schema/security"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:beans="http://www.springframework.org/schema/beans"
+	xmlns:sec="http://www.springframework.org/schema/security"
+	xmlns:ctx="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/security	 
+      http://www.springframework.org/schema/security/spring-security-4.2.xsd
+      http://www.springframework.org/schema/beans 
+      http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
+      http://www.springframework.org/schema/context
+	  http://www.springframework.org/schema/context/spring-context.xsd">
+
+	<beans:bean id="restAuthenticationEntryPoint"
+		class="ar.com.avaco.fwk.security.RestAuthenticationEntryPoint"></beans:bean>
+
+<!-- 	<http entry-point-ref="restAuthenticationEntryPoint" -->
+<!-- 		use-expressions="true" create-session="stateless"> -->
+
+<!-- 		<csrf disabled="true" /> -->	
+
+<!-- 		<intercept-url pattern="/auth/**" access="permitAll" /> -->
+<!-- 		<intercept-url pattern="/monitor" method="GET" access="permitAll" /> -->
+<!-- 		<intercept-url pattern="/password/reset" access="permitAll" /> -->
+
+<!-- 		<intercept-url pattern="/swagger-ui.html" access="permitAll" /> -->
+<!-- 		<intercept-url pattern="/swagger-ui/**"	access="permitAll" /> -->
+<!-- 		<intercept-url pattern="/v3/api-docs" access="permitAll" /> -->
+<!-- 		<intercept-url pattern="/v3/api-docs/**" access="permitAll" /> -->
+<!-- 		<intercept-url pattern="/swagger-resources/**"	access="permitAll" /> -->
+<!-- 		<intercept-url pattern="/webjars/**" access="permitAll" /> -->
+<!-- 		<intercept-url pattern="/v2/api-docs" access="permitAll" /> -->
+
+<!-- 		<intercept-url pattern="/auth/reset-password" access="isAuthenticated()" /> -->
+		
+<!-- 		<intercept-url pattern="/**" access="isAuthenticated()" /> -->
+
+<!-- 		<custom-filter ref="tokenFilter" before="FORM_LOGIN_FILTER" /> -->
+
+<!-- 		<logout /> -->
+
+<!-- 	</http> -->
+
+	<beans:bean id="tokenFilter" class="ar.com.avaco.fwk.security.filter.JwtAuthorizationTokenFilter" />
+
+	<beans:bean id="jwtUserDetailsService" class="ar.com.avaco.fwk.security.epservice.JwtUserDetailsService" />
+
+	<beans:bean id="jwtTokenUtil" class="ar.com.avaco.fwk.security.JwtTokenUtil" />
+
+	<authentication-manager
+		alias="authenticationManager">
+		<authentication-provider
+			user-service-ref="jwtUserDetailsService">
+			<sec:password-encoder ref="passwordEncoder" />
+		</authentication-provider>
+	</authentication-manager>
+
+	<global-method-security	pre-post-annotations="enabled" />
+
+</beans:beans>
