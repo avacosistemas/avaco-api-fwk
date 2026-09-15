@@ -70,9 +70,13 @@ public class NJBaseRepository<ID extends Serializable, E extends ar.com.avaco.fw
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public List<E> listPattern(String field, String pattern) {
+	public List<E> listPattern(String field, Object pattern) {
 		Criteria criteria = getCurrentSession().createCriteria(getHandledClass());
-		criteria.add(Restrictions.like(field, pattern, MatchMode.ANYWHERE).ignoreCase());
+		if (pattern instanceof String) {
+			criteria.add(Restrictions.like(field, pattern.toString(), MatchMode.ANYWHERE).ignoreCase());
+		} else {
+			criteria.add(Restrictions.eq(field, pattern));
+		}
 		return criteria.list();
 	}
 	
@@ -198,7 +202,7 @@ public class NJBaseRepository<ID extends Serializable, E extends ar.com.avaco.fw
 		return false;
 	}
 
-	private Criteria containsAlias(Criteria criteria, String property) {
+private Criteria containsAlias(Criteria criteria, String property) {
 		
 		if (!isPropertyEmbeddable(property) && property.contains(".")) {
 			String[] prop = property.split("\\.");

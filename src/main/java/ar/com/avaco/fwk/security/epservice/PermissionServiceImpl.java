@@ -3,6 +3,8 @@
  */
 package ar.com.avaco.fwk.security.epservice;
 
+import java.util.List;
+
 import javax.annotation.Resource;
 import javax.transaction.Transactional;
 
@@ -41,6 +43,12 @@ public class PermissionServiceImpl extends AbstractConvertService<Permission, Lo
 		entity.setCodigo(dto.getCode());
 		entity.setDescripcion(dto.getDescription());
 		return entity;
+	}
+
+	@Override
+	public List<Permission> listPattern(String field, Object pattern) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

@@ -7,8 +7,9 @@ import java.util.Map;
 
 import javax.annotation.Resource;
 
-import org.apache.log4j.Logger;
 import org.hibernate.Hibernate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -36,7 +37,7 @@ public class UsuarioServiceImpl extends NJBaseService<Long, Usuario, UsuarioRepo
 	private static final String USER_NEWPASSWORD_EQUALS_CURRENT = "user.newpassword.currentpassword.equals";
 	private static final String USER_CURRENT_PASSWORD_INVALID = "user.currentpassword.invalid";
 
-	private Logger logger = Logger.getLogger(this.getClass());
+	private Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	@Value("${email.from}")
 	private String from;

@@ -78,7 +78,7 @@ public abstract class NJBaseService<ID extends Serializable, T extends Entity<ID
 	}
 
 	@Override
-	public List<T> listPattern(String field, String pattern) {
+	public List<T> listPattern(String field, Object pattern) {
 		return getRepository().listPattern(field, pattern);
 	}
 

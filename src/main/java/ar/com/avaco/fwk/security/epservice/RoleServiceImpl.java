@@ -3,6 +3,8 @@
  */
 package ar.com.avaco.fwk.security.epservice;
 
+import java.util.List;
+
 import javax.annotation.Resource;
 import javax.transaction.Transactional;
 
@@ -40,5 +42,10 @@ public class RoleServiceImpl extends AbstractConvertService<Role, Long, Rol> imp
 		entity.setNombre(dto.getName());
 		entity.setCodigo(dto.getCode());
 		return entity;
+	}
+
+	@Override
+	public List<Role> listPattern(String field, Object pattern) {
+		return null;
 	}
 }

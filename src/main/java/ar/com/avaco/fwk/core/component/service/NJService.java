@@ -72,7 +72,7 @@ public interface NJService<ID extends Serializable, T extends Entity<ID>> {
 
 	List<T> listFilter(AbstractFilter abstractFilter);
 	
-	List<T> listPattern(String field, String pattern);
+	List<T> listPattern(String field, Object pattern);
 
 	
 }

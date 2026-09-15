@@ -77,7 +77,7 @@ public abstract class CRUDEPBaseService<ID extends Serializable, DTO extends DTO
 	}
 
 	@Override
-	public List<DTO> listPattern(String field, String pattern) {
+	public List<DTO> listPattern(String field, Object pattern) {
 		List<T> listPattern = this.service.listPattern(field, pattern);
 		return convertToDtos(listPattern);
 	}

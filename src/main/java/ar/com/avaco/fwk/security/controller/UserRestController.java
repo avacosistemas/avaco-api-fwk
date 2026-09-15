@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,7 +15,6 @@ import org.springframework.web.bind.annotation.RestController;
 import ar.com.avaco.fwk.core.component.controller.AbsctractRestController;
 import ar.com.avaco.fwk.core.component.dto.JSONResponse;
 import ar.com.avaco.fwk.core.exception.BusinessException;
-import ar.com.avaco.fwk.security.JwtTokenUtil;
 import ar.com.avaco.fwk.security.dto.User;
 import ar.com.avaco.fwk.security.epservice.UserService;
 

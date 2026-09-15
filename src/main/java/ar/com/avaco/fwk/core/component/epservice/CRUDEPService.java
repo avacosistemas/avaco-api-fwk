@@ -26,6 +26,6 @@ public interface CRUDEPService<ID extends Serializable, DTO extends DTOEntity<ID
 
 	List<DTO> listFilter(AbstractFilter abstractFilter);
 
-	List<DTO> listPattern(String field, String pattern);
+	List<DTO> listPattern(String field, Object pattern);
 
 }

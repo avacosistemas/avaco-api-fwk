@@ -84,4 +84,11 @@ public class ProfileServiceImpl extends AbstractConvertService<Profile, Long, Pe
 	public void setPermisoService(PerfilService perfilService) {
 		this.service = perfilService;
 	}
+
+
+	@Override
+	public List<Profile> listPattern(String field, Object pattern) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

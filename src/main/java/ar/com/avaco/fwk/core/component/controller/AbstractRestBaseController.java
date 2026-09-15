@@ -1,6 +1,7 @@
 package ar.com.avaco.fwk.core.component.controller;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -9,7 +10,7 @@ import ar.com.avaco.fwk.core.utils.FunctionBusiness;
 
 public abstract class AbstractRestBaseController {
 
-	private static final Logger LOGGER = Logger.getLogger(AbstractRestBaseController.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(AbstractRestBaseController.class);
 
 	protected static final String OK = "OK";
 

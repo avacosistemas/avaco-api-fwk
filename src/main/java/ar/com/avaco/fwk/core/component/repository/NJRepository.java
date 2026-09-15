@@ -16,6 +16,6 @@ public interface NJRepository<ID extends Serializable, E extends Entity<ID>> ext
 
 	List<E> listFilter(AbstractFilter abstractFilter);
 	
-	List<E> listPattern(String field, String pattern);
+	List<E> listPattern(String field, Object pattern);
 	
 }

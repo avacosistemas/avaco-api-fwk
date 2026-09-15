@@ -5,6 +5,7 @@ package ar.com.avaco.fwk.security.epservice;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -128,6 +129,12 @@ public class UserServiceImpl extends AbstractConvertService<User, Long, Usuario>
 	@Override
 	public User getByUsername(String username) {
 		return convertToDto(getService().findByUsername(username));
+	}
+
+	@Override
+	public List<User> listPattern(String field, Object pattern) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }
