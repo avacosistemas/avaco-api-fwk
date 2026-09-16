@@ -5,13 +5,13 @@ package ar.com.avaco.fwk.security.dto;
 
 import java.io.Serializable;
 
-import ar.com.avaco.fwk.core.domain.Entity;
+import ar.com.avaco.fwk.core.component.dto.DTOEntity;
 
 /**
  * @author avaco
  *
  */
-public class Permission extends Entity<Long> implements Serializable{
+public class PermisoDTO extends DTOEntity<Long> implements Serializable{
 	/**
 	 * 
 	 */
@@ -21,11 +21,11 @@ public class Permission extends Entity<Long> implements Serializable{
 	private String description;
 	private Boolean enabled;
 	
-	public Permission() {
+	public PermisoDTO() {
 		
 	}
 	
-	public Permission(Long id, String code, String description, Boolean enabled) {
+	public PermisoDTO(Long id, String code, String description, Boolean enabled) {
 		super();
 		this.id = id;
 		this.code = code;

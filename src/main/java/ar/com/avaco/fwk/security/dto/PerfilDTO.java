@@ -7,13 +7,13 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-import ar.com.avaco.fwk.core.domain.Entity;
+import ar.com.avaco.fwk.core.component.dto.DTOEntity;
 
 /**
  * @author avaco
  *
  */
-public class Profile extends Entity<Long> implements Serializable {
+public class PerfilDTO extends DTOEntity<Long> implements Serializable {
 
 	/**
 	 * 
@@ -22,15 +22,15 @@ public class Profile extends Entity<Long> implements Serializable {
 
 	private Long id;
 	private String name;
-	private Role role;
-	private List<Permission> permissions = new ArrayList<Permission>();
+	private RolDTO role;
+	private List<PermisoDTO> permissions = new ArrayList<PermisoDTO>();
 	private Boolean enabled;
 
-	public Profile() {
+	public PerfilDTO() {
 
 	}
 
-	public Profile(Long id, String name, Role role, List<Permission> permissions, Boolean enabled) {
+	public PerfilDTO(Long id, String name, RolDTO role, List<PermisoDTO> permissions, Boolean enabled) {
 		super();
 		this.id = id;
 		this.name = name;
@@ -47,19 +47,19 @@ public class Profile extends Entity<Long> implements Serializable {
 		this.id = id;
 	}
 
-	public Role getRole() {
+	public RolDTO getRole() {
 		return role;
 	}
 
-	public void setRole(Role role) {
+	public void setRole(RolDTO role) {
 		this.role = role;
 	}
 
-	public List<Permission> getPermissions() {
+	public List<PermisoDTO> getPermissions() {
 		return permissions;
 	}
 
-	public void setPermissions(List<Permission> permissions) {
+	public void setPermissions(List<PermisoDTO> permissions) {
 		this.permissions = permissions;
 	}
 

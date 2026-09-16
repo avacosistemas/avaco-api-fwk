@@ -6,13 +6,13 @@ package ar.com.avaco.fwk.security.dto;
 import java.io.Serializable;
 import java.util.Set;
 
-import ar.com.avaco.fwk.core.domain.Entity;
+import ar.com.avaco.fwk.core.component.dto.DTOEntity;
 
 /**
  * @author avaco
  *
  */
-public class User extends Entity<Long> implements Serializable {
+public class UsuarioDTO extends DTOEntity<Long> implements Serializable {
 
 	/**
 	 * 
@@ -22,20 +22,17 @@ public class User extends Entity<Long> implements Serializable {
 	private String username;
 	private String name;
 	private String lastname;
-	private Set<Profile> profiles;
+	private Set<PerfilDTO> profiles;
 	private String email;
 	private boolean enabled;
-	private String usuariosap;
 	private Boolean admin;
-	private String deposito;
-	private Long legajoFichaje;
 
-	public User() {
+	public UsuarioDTO() {
 
 	}
 
-	public User(Long id, String username, String name, String lastname, Set<Profile> profiles, String email,
-			String usuariosap, boolean enabled, Boolean admin, String deposito, Long legajoFichaje) {
+	public UsuarioDTO(Long id, String username, String name, String lastname, Set<PerfilDTO> profiles, String email,
+			boolean enabled, Boolean admin) {
 		super();
 		this.id = id;
 		this.username = username;
@@ -43,11 +40,8 @@ public class User extends Entity<Long> implements Serializable {
 		this.lastname = lastname;
 		this.profiles = profiles;
 		this.email = email;
-		this.usuariosap = usuariosap;
 		this.enabled = enabled;
 		this.admin = admin;
-		this.deposito = deposito;
-		this.legajoFichaje = legajoFichaje;
 	}
 
 	public Long getId() {
@@ -90,11 +84,11 @@ public class User extends Entity<Long> implements Serializable {
 		this.email = email;
 	}
 
-	public Set<Profile> getProfiles() {
+	public Set<PerfilDTO> getProfiles() {
 		return profiles;
 	}
 
-	public void setProfiles(Set<Profile> profiles) {
+	public void setProfiles(Set<PerfilDTO> profiles) {
 		this.profiles = profiles;
 	}
 
@@ -106,36 +100,12 @@ public class User extends Entity<Long> implements Serializable {
 		this.enabled = enabled;
 	}
 
-	public String getUsuariosap() {
-		return usuariosap;
-	}
-
-	public void setUsuariosap(String usuariosap) {
-		this.usuariosap = usuariosap;
-	}
-
 	public Boolean getAdmin() {
 		return admin;
 	}
 
 	public void setAdmin(Boolean admin) {
 		this.admin = admin;
-	}
-
-	public String getDeposito() {
-		return deposito;
-	}
-
-	public void setDeposito(String deposito) {
-		this.deposito = deposito;
-	}
-
-	public Long getLegajoFichaje() {
-		return legajoFichaje;
-	}
-
-	public void setLegajoFichaje(Long legajoFichaje) {
-		this.legajoFichaje = legajoFichaje;
 	}
 
 }

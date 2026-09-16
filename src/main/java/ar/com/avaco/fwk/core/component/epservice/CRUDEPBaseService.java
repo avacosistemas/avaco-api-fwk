@@ -14,10 +14,8 @@ import ar.com.avaco.fwk.core.exception.BusinessException;
 public abstract class CRUDEPBaseService<ID extends Serializable, DTO extends DTOEntity<ID>, T extends Entity<ID>, S extends NJService<ID, T>>
 		implements CRUDEPService<ID, DTO> {
 
-	
-	
 	protected S service;
-	
+
 	@Override
 	public DTO save(DTO dto) throws BusinessException {
 		validationSave(dto);
@@ -29,7 +27,7 @@ public abstract class CRUDEPBaseService<ID extends Serializable, DTO extends DTO
 	protected void validationSave(DTO dto) {
 		// Implementar en los hijos
 	}
-	
+
 	protected void validationUpdate(DTO dto) {
 		// Implementar en los hijos
 	}
@@ -105,7 +103,7 @@ public abstract class CRUDEPBaseService<ID extends Serializable, DTO extends DTO
 	protected final S getService() {
 		return this.service;
 	}
-	
+
 	protected abstract void setService(S service);
-	
+
 }

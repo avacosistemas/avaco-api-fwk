@@ -13,13 +13,11 @@ import javax.persistence.CollectionTable;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
+import javax.persistence.Inheritance;
+import javax.persistence.InheritanceType;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -31,6 +29,7 @@ import org.springframework.security.core.GrantedAuthority;
 @Entity
 @Table(name = "SEG_USUARIO")
 @SequenceGenerator(name = "SEG_USUARIO_SEQ", sequenceName = "SEG_USUARIO_SEQ", allocationSize = 1)
+@Inheritance(strategy = InheritanceType.JOINED)
 public class Usuario extends ar.com.avaco.fwk.core.domain.Entity<Long> implements UserDetailsExtended {
 
 	private static final long serialVersionUID = 2797698434873046327L;
@@ -88,24 +87,8 @@ public class Usuario extends ar.com.avaco.fwk.core.domain.Entity<Long> implement
 	@Column(length = 100, nullable = false)
 	private String email;
 
-	/**
-	 * Sap del usuario.
-	 */
-	@Column(length = 40, nullable = false)
-	private String usuariosap;
-
 	@Column(name = "admin")
 	private Boolean admin;
-
-	@Column(name = "deposito")
-	private String deposito;
-
-	/**
-	 * Listado de emails asociados al usuario para realizar la notificacion de
-	 * operaciones como nominaciones, autorizaciones, etc.
-	 */
-	@ElementCollection
-	private Set<String> mailsNotificacion;
 
 	@Column
 	private boolean interno;
@@ -142,13 +125,14 @@ public class Usuario extends ar.com.avaco.fwk.core.domain.Entity<Long> implement
 	@CollectionTable(name = "HISTORICO_PASSWORDS")
 	private Set<String> historicoPasswords;
 
-	@ManyToMany(fetch = FetchType.LAZY)
-	@JoinTable(name = "SEG_USR_IMPER", joinColumns = {
-			@JoinColumn(name = "ID_SEG_USUARIO", referencedColumnName = "ID_SEG_USUARIO") }, inverseJoinColumns = @JoinColumn(name = "ID_SEG_USUARIO_IMPER", referencedColumnName = "ID_SEG_USUARIO"))
-	private Set<Usuario> impersonables = new HashSet<Usuario>();
-
-	@Column(name = "LEGAJO")
-	private Integer legajo;
+//	@Column(length = 40, nullable = false)
+//	private String usuariosap;
+//
+//	@Column(name = "deposito")
+//	private String deposito;
+//	
+//	@Column(name = "LEGAJO")
+//	private Long legajo;
 
 	public Long getId() {
 		return this.id;
@@ -221,16 +205,6 @@ public class Usuario extends ar.com.avaco.fwk.core.domain.Entity<Long> implement
 		return roles;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.springframework.security.core.userdetails.UserDetails#getAuthorities
-	 * ()
-	 * 
-	 * Verifica si existe un usuario seteado para impersonar. Si hay un usuario
-	 * seteado, devuelve los granted authorities del mismo. Sino devuelve los del
-	 * actual.
-	 */
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
 		return getAuthorities(this);
@@ -338,14 +312,6 @@ public class Usuario extends ar.com.avaco.fwk.core.domain.Entity<Long> implement
 	 */
 	public void setEmail(String email) {
 		this.email = email;
-	}
-
-	public Set<String> getMailsNotificacion() {
-		return mailsNotificacion;
-	}
-
-	public void setMailsNotificacion(Set<String> mailsNotificacion) {
-		this.mailsNotificacion = mailsNotificacion;
 	}
 
 	/**
@@ -456,44 +422,12 @@ public class Usuario extends ar.com.avaco.fwk.core.domain.Entity<Long> implement
 		return sb.toString();
 	}
 
-	public Set<Usuario> getImpersonables() {
-		return impersonables;
-	}
-
-	public void setImpersonables(Set<Usuario> impersonables) {
-		this.impersonables = impersonables;
-	}
-
-	public String getUsuariosap() {
-		return usuariosap;
-	}
-
-	public void setUsuariosap(String usuariosap) {
-		this.usuariosap = usuariosap;
-	}
-
 	public Boolean getAdmin() {
 		return admin;
 	}
 
 	public void setAdmin(Boolean admin) {
 		this.admin = admin;
-	}
-
-	public String getDeposito() {
-		return deposito;
-	}
-
-	public void setDeposito(String deposito) {
-		this.deposito = deposito;
-	}
-
-	public Integer getLegajo() {
-		return legajo;
-	}
-
-	public void setLegajo(Integer legajo) {
-		this.legajo = legajo;
 	}
 
 }

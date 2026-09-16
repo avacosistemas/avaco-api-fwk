@@ -22,10 +22,8 @@ import ar.com.avaco.fwk.security.JwtTokenUtil;
 import ar.com.avaco.fwk.security.domain.Usuario;
 import ar.com.avaco.fwk.security.dto.JwtAuthenticationRequest;
 import ar.com.avaco.fwk.security.dto.JwtAuthenticationResponse;
-import ar.com.avaco.fwk.security.dto.User;
 import ar.com.avaco.fwk.security.dto.UserAuthorised;
 import ar.com.avaco.fwk.security.epservice.JwtUserDetailsService;
-import ar.com.avaco.fwk.security.epservice.UserService;
 import ar.com.avaco.fwk.security.exception.AuthenticationException;
 
 @RestController
@@ -43,9 +41,6 @@ public class AuthenticationRestController {
 	@Resource(name = "jwtUserDetailsService")
 	private JwtUserDetailsService userDetailsService;
 
-	@Resource(name = "userService")
-	private UserService userService;
-
 	@RequestMapping(value = "/auth", method = RequestMethod.POST)
 	public ResponseEntity<JwtAuthenticationResponse> createAuthenticationToken(
 			@RequestBody JwtAuthenticationRequest authenticationRequest) throws AuthenticationException {
@@ -59,17 +54,17 @@ public class AuthenticationRestController {
 
 			String token = jwtTokenUtil.generatePasswordExpiredToken(userDetails);
 
-			User usuario = userService.getByUsername(userDetails.getUsername());
+			Usuario usuario = (Usuario) userDetails;
 
 			return ResponseEntity.status(HttpStatus.CONFLICT).body(new JwtAuthenticationResponse(token, usuario, true));
-
 		}
 
 		// Reload password post-security so we can generate the token
 		final UserDetails userDetails = userDetailsService.loadUserByUsername(authenticationRequest.getUsername());
+
 		final String token = jwtTokenUtil.generateToken(userDetails);
 
-		User usuario = userService.getByUsername(userDetails.getUsername());
+		Usuario usuario = (Usuario) userDetails;
 
 		// Return the token and user datas
 		return ResponseEntity.ok(new JwtAuthenticationResponse(token, usuario, false));
@@ -78,33 +73,41 @@ public class AuthenticationRestController {
 	@RequestMapping(value = "/authAdmin", method = RequestMethod.POST)
 	public ResponseEntity<?> createAuthenticationTokenAdmin(@RequestBody JwtAuthenticationRequest authenticationRequest)
 			throws AuthenticationException {
+
 		authenticate(authenticationRequest.getUsername(), authenticationRequest.getPassword());
 
 		// Reload password post-security so we can generate the token
 		final UserDetails userDetails = userDetailsService.loadUserByUsername(authenticationRequest.getUsername());
+
 		final String token = jwtTokenUtil.generateToken(userDetails);
 
-		User usuario = userService.getByUsername(userDetails.getUsername());
+		Usuario usuario = (Usuario) userDetails;
+
 		if (!usuario.getAdmin().booleanValue()) {
 			throw new AuthenticationException("El usuario " + authenticationRequest.getUsername() + " no es admin",
 					null);
 		}
+
 		// Return the token and user datas
 		return ResponseEntity.ok(new JwtAuthenticationResponse(token, usuario, false));
 	}
 
 	@RequestMapping(value = "/refresh", method = RequestMethod.POST)
 	public ResponseEntity<?> refreshAndGetAuthenticationToken(HttpServletRequest request) {
+
 		String authToken = request.getHeader(tokenHeader);
 		final String token = authToken.substring(7);
+
 		String username = jwtTokenUtil.getUsernameFromToken(token);
-		Usuario user = (Usuario) userDetailsService.loadUserByUsername(username);
 
-		User usuario = userService.getByUsername(username);
+		Usuario usuario = (Usuario) userDetailsService.loadUserByUsername(username);
 
-		if (jwtTokenUtil.canTokenBeRefreshed(token, user.getFechaAltaPassword())) {
+		if (jwtTokenUtil.canTokenBeRefreshed(token, usuario.getFechaAltaPassword())) {
+
 			String refreshedToken = jwtTokenUtil.refreshToken(token);
+
 			return ResponseEntity.ok(new JwtAuthenticationResponse(refreshedToken, usuario, false));
+
 		} else {
 			return ResponseEntity.badRequest().body(null);
 		}
@@ -140,24 +143,5 @@ public class AuthenticationRestController {
 		Objects.requireNonNull(password);
 		authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
 	}
-
-//	public void setJwtTokenUtilManager(JwtTokenUtil jwtTokenUtil) {
-//		this.jwtTokenUtil = jwtTokenUtil;
-//	}
-//
-//	
-//	public void setJwtUserDetailsServiceManager(UserDetailsService userDetailsService) {
-//		this.userDetailsService = userDetailsService;
-//	}
-//
-//
-//	public void setAuthenticationManager(AuthenticationManager authenticationManager) {
-//		this.authenticationManager = authenticationManager;
-//	}
-//
-//
-//	public void setUserServiceManager(UserService userService) {
-//		this.userService = userService;
-//	}
 
 }

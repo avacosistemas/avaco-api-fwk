@@ -16,14 +16,14 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import ar.com.avaco.fwk.core.component.controller.AbsctractRestController;
+import ar.com.avaco.fwk.core.component.controller.AbstractDTORestController;
 import ar.com.avaco.fwk.core.component.dto.JSONResponse;
 import ar.com.avaco.fwk.core.exception.BusinessException;
-import ar.com.avaco.fwk.security.dto.Permission;
-import ar.com.avaco.fwk.security.epservice.PermissionService;
+import ar.com.avaco.fwk.security.dto.PermisoDTO;
+import ar.com.avaco.fwk.security.epservice.PermisoEPService;
 
 @RestController
-public class PermissionRestController extends AbsctractRestController<Permission, Long, PermissionService> {
+public class PermisoRestController extends AbstractDTORestController<PermisoDTO, Long, PermisoEPService>{
 
 	// -------------------Retrieve All
 	// permisos--------------------------------------------------------
@@ -35,10 +35,10 @@ public class PermissionRestController extends AbsctractRestController<Permission
 
 	@RequestMapping(value = "/permissions/filterPermisoByNombre", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<JSONResponse> listFilter(@RequestParam String name) {
-		List<Permission> pornombre = this.service.listPattern("codigo", name);
-		List<Permission> porcodigo = this.service.listPattern("descripcion", name);
+		List<PermisoDTO> pornombre = this.service.listPattern("codigo", name);
+		List<PermisoDTO> porcodigo = this.service.listPattern("descripcion", name);
 		
-		Set<Permission> permisos = new HashSet<>();
+		Set<PermisoDTO> permisos = new HashSet<>();
 		permisos.addAll(pornombre);
 		permisos.addAll(porcodigo);
 		
@@ -57,14 +57,14 @@ public class PermissionRestController extends AbsctractRestController<Permission
 	// -------------------Create a
 	// Page--------------------------------------------------------
 	@RequestMapping(value = "/permissions", method = RequestMethod.POST)
-	public ResponseEntity<JSONResponse> create(@RequestBody Permission permission) throws BusinessException {
+	public ResponseEntity<JSONResponse> create(@RequestBody PermisoDTO permission) throws BusinessException {
 		return super.create(permission);
 	}
 
 	// ------------------- Update a Page
 	// --------------------------------------------------------
 	@RequestMapping(value = "/permissions", method = RequestMethod.PUT)
-	public ResponseEntity<JSONResponse> update(@RequestBody Permission permission) throws BusinessException {
+	public ResponseEntity<JSONResponse> update(@RequestBody PermisoDTO permission) throws BusinessException {
 		return super.update(permission.getId(), permission);
 	}
 	// ------------------- Delete a Page
@@ -75,9 +75,11 @@ public class PermissionRestController extends AbsctractRestController<Permission
 		return super.delete(id);
 	}
 
-	@Resource(name = "permissionService")
-	public void setPermissionService(PermissionService permissionService) {
-		super.service = permissionService;
+	@Override
+	@Resource(name = "permisoEPService")
+	public void setService(PermisoEPService service) {
+		super.service = service;
+		
 	}
 
 }

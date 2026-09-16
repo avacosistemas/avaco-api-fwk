@@ -5,13 +5,13 @@ package ar.com.avaco.fwk.security.dto;
 
 import java.io.Serializable;
 
-import ar.com.avaco.fwk.core.domain.Entity;
+import ar.com.avaco.fwk.core.component.dto.DTOEntity;
 
 /**
  * @author avaco
  *
  */
-public class Role extends Entity<Long> implements Serializable{
+public class RolDTO extends DTOEntity<Long> implements Serializable {
 
 	/**
 	 * 
@@ -20,12 +20,12 @@ public class Role extends Entity<Long> implements Serializable{
 	private Long id;
 	private String code;
 	private String name;
-	
-	public Role() {
-		
+
+	public RolDTO() {
+
 	}
 
-	public Role(Long id, String code, String name) {
+	public RolDTO(Long id, String code, String name) {
 		super();
 		this.id = id;
 		this.code = code;
@@ -54,5 +54,5 @@ public class Role extends Entity<Long> implements Serializable{
 
 	public void setName(String name) {
 		this.name = name;
-	}	
+	}
 }

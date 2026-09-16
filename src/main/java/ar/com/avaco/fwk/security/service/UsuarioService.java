@@ -7,6 +7,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import ar.com.avaco.fwk.core.component.service.NJService;
 import ar.com.avaco.fwk.security.domain.Usuario;
+import ar.com.avaco.fwk.security.exception.NuclearJSecurityException;
 
 /**
  * the user service.
@@ -36,15 +37,7 @@ public interface UsuarioService extends NJService<Long, Usuario> {
 
 	UserDetails loadUserByUsername(String username) throws UsernameNotFoundException;
 	
-	List<Usuario> getExternalUsersLike(String userLess,String userLike);
-	
 	void generateNewPassword(Usuario user);
-	
-	Usuario getUserWithEmails(Usuario user);
-
-	List<Usuario> listUsuariosParaImpersonar(Usuario usuario);
-
-	void update(Usuario usuario, List<Usuario> impersonables);
 	
 	Usuario findById(Long id);
 	
@@ -52,15 +45,20 @@ public interface UsuarioService extends NJService<Long, Usuario> {
 	
 	Usuario findByUsername(String username);
 
-	String getUsuarioSAPByUsername(String username);
-
-	String getDeposito(String username);
-
-	String getUsuarioSAPByLegajo(int legajo);
-
-	String getUsuarioSAP(String username);
-
 	List<Usuario> getByIds(List<Long> lista);
+
+	void validarUsuario(Usuario usuario) throws NuclearJSecurityException;
+
+	/**
+	 * Genera un string en forma aleatoria para ser usado de password.
+	 * 
+	 * @return un string de 8 caracteres.
+	 */
+	String generarPasswordAleatorio();
+
+	String encodePassword(String tmppass);
+
+	void notifyPasswordNewUser(Usuario user, String tmpass);
 	
 }
 

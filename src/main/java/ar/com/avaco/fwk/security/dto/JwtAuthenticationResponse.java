@@ -6,6 +6,11 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import ar.com.avaco.fwk.security.domain.Acceso;
+import ar.com.avaco.fwk.security.domain.Perfil;
+import ar.com.avaco.fwk.security.domain.Permiso;
+import ar.com.avaco.fwk.security.domain.Usuario;
+
 /**
  * 
  */
@@ -19,7 +24,7 @@ public class JwtAuthenticationResponse implements Serializable {
 
 	private String lastname;
 
-	private Set<Permission> permissions;
+	private Set<PermisoDTO> permissions;
 
 	private String email;
 
@@ -37,26 +42,40 @@ public class JwtAuthenticationResponse implements Serializable {
 		this.token = token;
 	}
 
-	public JwtAuthenticationResponse(String token, User usuario, Boolean passwordExpired) {
-		this.token = token;
+	public JwtAuthenticationResponse(String token, Usuario usuario, Boolean passwordExpired) {
+	    this.token = token;
+	    this.name = usuario.getNombre();
+	    this.lastname = usuario.getApellido();
+	    this.email = usuario.getEmail();
+	    this.role = "Administrators";
 
-		this.name = usuario.getName();
-		this.lastname = usuario.getLastname();
-		this.email = usuario.getEmail();
-		this.role = "Administrators";
-		if (!passwordExpired) {
-			this.permissions = new HashSet<Permission>();
-			Set<Profile> profiles = usuario.getProfiles();
-			for (Profile profile : profiles) {
-				this.permissions.addAll(profile.getPermissions());
-			}
-			this.permisos = this.permissions.stream().map(Permission::getCode).collect(Collectors.joining(";"));
-		}
-		UUID uuid = UUID.randomUUID();
-		this.guid = uuid.toString();
-		this.username = usuario.getUsername();
+	    if (!passwordExpired) {
+	        this.permissions = new HashSet<PermisoDTO>();
 
-		this.passwordExpired = passwordExpired;
+	        if (usuario.getAccesos() != null) {
+	            for (Acceso acceso : usuario.getAccesos()) {
+	                Perfil perfil = acceso.getPerfil();
+
+	                if (perfil != null && perfil.isActivo() && perfil.getPermisos() != null) {
+	                    for (Permiso permiso : perfil.getPermisos()) {
+	                        if (permiso != null && permiso.getAuthority() != null) {
+	                            PermisoDTO permission = new PermisoDTO();
+	                            permission.setCode(permiso.getCodigo());
+	                            this.permissions.add(permission);
+	                        }
+	                    }
+	                }
+	            }
+	        }
+
+	        this.permisos = this.permissions.stream()
+	                .map(PermisoDTO::getCode)
+	                .collect(Collectors.joining(";"));
+	    }
+
+	    this.guid = UUID.randomUUID().toString();
+	    this.username = usuario.getUsername();
+	    this.passwordExpired = passwordExpired;
 	}
 
 	public String getPermisos() {
@@ -103,11 +122,11 @@ public class JwtAuthenticationResponse implements Serializable {
 		this.lastname = lastname;
 	}
 
-	public Set<Permission> getPermissions() {
+	public Set<PermisoDTO> getPermissions() {
 		return permissions;
 	}
 
-	public void setPermissions(Set<Permission> permissions) {
+	public void setPermissions(Set<PermisoDTO> permissions) {
 		permissions = permissions;
 	}
 

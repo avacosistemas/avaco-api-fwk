@@ -7,9 +7,6 @@ import java.util.Map;
 
 import javax.annotation.Resource;
 
-import org.hibernate.Hibernate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -37,14 +34,24 @@ public class UsuarioServiceImpl extends NJBaseService<Long, Usuario, UsuarioRepo
 	private static final String USER_NEWPASSWORD_EQUALS_CURRENT = "user.newpassword.currentpassword.equals";
 	private static final String USER_CURRENT_PASSWORD_INVALID = "user.currentpassword.invalid";
 
-	private Logger logger = LoggerFactory.getLogger(this.getClass());
-
 	@Value("${email.from}")
 	private String from;
 
 	@Value("${email.cc}")
 	private String cc;
+	
+	@Value("${email.subject.register}")
+	private String subjectRegister;
 
+	@Value("${email.body.register}")
+	private String bodyRegister;
+
+	@Value("${email.subject.resetPassword}")
+	private String subjectResetPassword;
+	
+	@Value("${email.body.resetPassword}")
+	private String bodyResetPassword;
+	
 	/**
 	 * The Password Encoder
 	 */
@@ -55,24 +62,13 @@ public class UsuarioServiceImpl extends NJBaseService<Long, Usuario, UsuarioRepo
 	private MailSenderSMTPService mailSenderSMTPService;
 
 	@Override
-	public String getUsuarioSAP(String username) {
-		Usuario usuario = this.getRepository().findByUsername(username);
-		return usuario.getUsuariosap();
-	}
-
-	public String getDeposito(String username) {
-		Usuario usuario = this.getRepository().findByUsername(username);
-		return usuario.getDeposito();
-	}
-
-	@Override
 	public void updatePassword(Usuario user, String password, String newPassword) {
 		if (!passwordEncoder.matches(password, user.getPassword())) {
 			throw new NuclearJSecurityException(USER_CURRENT_PASSWORD_INVALID);
 		} else if (password.equals(newPassword)) {
 			throw new NuclearJSecurityException(USER_NEWPASSWORD_EQUALS_CURRENT);
 		}
-		user.setPassword(passwordEncoder.encode(newPassword));
+		user.setPassword(encodePassword(newPassword));
 		user.setFechaAltaPassword(Calendar.getInstance().getTime());
 		user.setRequiereCambioPassword(Boolean.FALSE);
 		getRepository().save(user);
@@ -93,17 +89,22 @@ public class UsuarioServiceImpl extends NJBaseService<Long, Usuario, UsuarioRepo
 		usuario.setRequiereCambioPassword(false);
 
 		String tmppass = generarPasswordAleatorio();
-		usuario.setPassword(passwordEncoder.encode(tmppass));
+		usuario.setPassword(encodePassword(tmppass));
 
 		usuario = getRepository().save(usuario);
+		
+		notifyPasswordNewUser(usuario, tmppass);
 
-		if (mailSenderSMTPService != null) {
-			notifyPasswordNewUser(usuario, tmppass);
-		}
 		return usuario;
 	}
 
-	private void validarUsuario(Usuario usuario) throws NuclearJSecurityException {
+	@Override
+	public String encodePassword(String tmppass) {
+		return passwordEncoder.encode(tmppass);
+	}
+
+	@Override
+	public void validarUsuario(Usuario usuario) throws NuclearJSecurityException {
 		Map<String, String> errors = new HashMap<String, String>();
 		String username = usuario.getUsername();
 		Usuario userByUsername = getRepository().findByUsername(username);
@@ -126,7 +127,8 @@ public class UsuarioServiceImpl extends NJBaseService<Long, Usuario, UsuarioRepo
 	 * 
 	 * @return un string de 8 caracteres.
 	 */
-	private String generarPasswordAleatorio() {
+	@Override
+	public String generarPasswordAleatorio() {
 		String generateKey = KeyGenerators.string().generateKey();
 		return generateKey;
 	}
@@ -166,86 +168,38 @@ public class UsuarioServiceImpl extends NJBaseService<Long, Usuario, UsuarioRepo
 	}
 
 	@Override
-	public List<Usuario> getExternalUsersLike(String userLess, String userLike) {
-		return getRepository().getExternalUsersLike(userLess, userLike);
-	}
-
-	@Override
 	public void generateNewPassword(Usuario user) {
 		user.addPasswordToHistoric(user.getPassword());
 		String tmppass = generarPasswordAleatorio();
-		String enctmppass = passwordEncoder.encode(tmppass);
+		String enctmppass = encodePassword(tmppass);
 		user.setPassword(enctmppass);
 		user.setIntentosFallidosLogin(0);
 		user.setRequiereCambioPassword(Boolean.TRUE);
 		update(user);
-		if (mailSenderSMTPService != null) {
-			notifyPassword(user, tmppass);
-		}
+		notifyPassword(user, tmppass);
 	}
 
-	private void notifyPasswordNewUser(Usuario user, String tmpass) {
-		String subject = "PremecMobile";
-		StringBuilder msg = new StringBuilder("¡Bienvenido ");
-		msg.append(user.getNombreApellido());
-		msg.append(" a PremecMobile! <br>");
-		msg.append("Se le ha asignado una contraseña a su usuario ");
-		msg.append(user.getUsername());
-		msg.append(".<br>");
-		msg.append("La contraseña asignada es: <strong>");
-		msg.append(tmpass);
-		msg.append("<br>");
-		mailSenderSMTPService.sendMail(from, user.getEmail(), cc, subject.toString(), msg.toString(), null);
+	@Override
+	public void notifyPasswordNewUser(Usuario user, String tmpass) {
+		String subject = subjectRegister;
+		String body = bodyRegister;
+		body = body.replaceAll("%nombreCompleto%", user.getNombreApellido());
+		body = body.replaceAll("%username%", user.getUsername());
+		body = body.replaceAll("%tmpass%", tmpass);
+		mailSenderSMTPService.sendMail(from, user.getEmail(), cc, subject, body, null);
 	}
 
 	private void notifyPassword(Usuario user, String tmppas) {
-		String subject = " Admin";
-		StringBuilder msg = new StringBuilder("Estimado ");
-		msg.append(user.getNombreApellido());
-		msg.append("<br>Se le ha asignado una contraseña temporal a su usuario ");
-		msg.append(user.getUsername());
-		msg.append(".<br>");
-		msg.append("La contraseña asignada es: <strong>");
-		msg.append(tmppas);
-		msg.append("<br>");
-		mailSenderSMTPService.sendMail(from, user.getEmail(), cc, subject.toString(), msg.toString(), null);
-	}
-
-	@Override
-	public Usuario getUserWithEmails(Usuario user) {
-		Usuario current = getRepository().findOne(user.getId());
-		Hibernate.initialize(current.getMailsNotificacion());
-		return current;
-	}
-
-	@Override
-	public void update(Usuario usuario, List<Usuario> impersonables) {
-		usuario = getRepository().findOne(usuario.getId());
-		usuario.getImpersonables().clear();
-		usuario.getImpersonables().addAll(impersonables);
-		getRepository().save(usuario);
-	}
-
-	@Override
-	public List<Usuario> listUsuariosParaImpersonar(Usuario usuario) {
-		return getRepository().listUsuariosParaImpersonar(usuario);
+		String subject = subjectResetPassword;
+		String body = bodyResetPassword;
+		body = body.replaceAll("%nombreCompleto%", user.getNombreApellido());
+		body = body.replaceAll("%username%", user.getUsername());
+		body = body.replaceAll("%tmppas%", tmppas);
+		mailSenderSMTPService.sendMail(from, user.getEmail(), cc, subject, body, null);
 	}
 
 	public Usuario findById(Long id) {
 		return getRepository().findOne(id);
-	}
-
-	public void setMailSenderSMTPService(MailSenderSMTPService mailSenderSMTPService) {
-		this.mailSenderSMTPService = mailSenderSMTPService;
-	}
-
-	public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
-		this.passwordEncoder = passwordEncoder;
-	}
-
-	@Resource(name = "usuarioRepository")
-	public void setUsuarioRepository(UsuarioRepository usuarioRepository) {
-		this.repository = usuarioRepository;
 	}
 
 	@Override
@@ -262,41 +216,14 @@ public class UsuarioServiceImpl extends NJBaseService<Long, Usuario, UsuarioRepo
 		return user;
 	}
 
-	public void setFrom(String from) {
-		this.from = from;
-	}
-
-	public void setCc(String cc) {
-		this.cc = cc;
-	}
-
-	@Override
-	public String getUsuarioSAPByUsername(String username) {
-		Usuario usuario = this.getRepository().findByUsername(username);
-		return usuario.getUsuariosap();
-	}
-
-	@Override
-	public String getUsuarioSAPByLegajo(int legajo) {
-		try {
-			String usuariosap = this.repository.findByLegajo(legajo).getUsuariosap();
-			return usuariosap;
-		} catch (Exception e) {
-			logger.error("----------");
-			logger.error("----------");
-			logger.error("----------");
-			logger.error("----------");
-			logger.error("No se encontro usuario con legajo " + legajo);
-			logger.error("----------");
-			logger.error("----------");
-			logger.error("----------");
-			throw e;
-		}
-	}
-
 	@Override
 	public List<Usuario> getByIds(List<Long> lista) {
 		return this.repository.findByIdIn(lista);
+	}
+
+	@Resource(name = "usuarioRepository")
+	public void setUsuarioRepository(UsuarioRepository usuarioRepository) {
+		this.repository = usuarioRepository;
 	}
 
 }

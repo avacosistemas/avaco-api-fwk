@@ -38,14 +38,6 @@ public class Acceso extends ar.com.avaco.fwk.core.domain.Entity<Long> {
 	@JoinColumn(foreignKey = @ForeignKey(name = "USUARIO_FK"))
 	private Usuario usuario;
 
-	public Usuario getUsuario() {
-		return usuario;
-	}
-
-	public void setUsuario(Usuario usuario) {
-		this.usuario = usuario;
-	}
-
 	/**
 	 * El perfil del Acceso
 	 */
@@ -90,6 +82,14 @@ public class Acceso extends ar.com.avaco.fwk.core.domain.Entity<Long> {
 		sb.append(" - ");
 		sb.append(getPerfil().getNombre());
 		return sb.toString();
+	}
+	
+	public Usuario getUsuario() {
+		return usuario;
+	}
+
+	public void setUsuario(Usuario usuario) {
+		this.usuario = usuario;
 	}
 
 }
