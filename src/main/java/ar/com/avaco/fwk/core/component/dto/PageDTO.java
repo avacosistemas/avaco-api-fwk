@@ -2,6 +2,8 @@ package ar.com.avaco.fwk.core.component.dto;
 
 import java.util.List;
 
+import ar.com.avaco.fwk.core.component.dto.entity.DTOEntity;
+
 public class PageDTO<DTO extends DTOEntity<?>> {
 
 	private List<DTO> list;

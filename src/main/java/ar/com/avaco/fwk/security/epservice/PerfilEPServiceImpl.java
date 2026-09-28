@@ -31,6 +31,10 @@ import ar.com.avaco.fwk.security.service.RolService;
 public class PerfilEPServiceImpl extends CRUDEPBaseService<Long, PerfilDTO, Perfil, PerfilService>
 		implements PerfilEPService {
 
+	public PerfilEPServiceImpl() {
+		super(Perfil.class, PerfilDTO.class);
+	}
+
 	@Autowired
 	private RolService rolService;
 

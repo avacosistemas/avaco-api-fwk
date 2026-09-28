@@ -12,9 +12,10 @@ public class JSONResponse {
 	public static final String ERROR = "ERROR";
 	public static final String OK = "OK";
 
-	private Boolean ok;
 	private String status;
 	private Object data;
+
+	private Boolean ok;
 
 	private String error;
 
@@ -24,10 +25,19 @@ public class JSONResponse {
 
 	}
 
+	public JSONResponse(PageDTO<?> dto) {
+		this.data = dto.getList();
+		this.page = dto.toPageRepsponse();
+		this.status = OK;
+		this.ok = true;
+
+	}
+
 	public JSONResponse(String status, Object data) {
 		super();
 		this.status = status;
 		this.data = data;
+		this.ok = true;
 	}
 
 	public String getStatus() {
@@ -46,14 +56,6 @@ public class JSONResponse {
 		this.data = data;
 	}
 
-	public Boolean getOk() {
-		return ok;
-	}
-
-	public void setOk(Boolean ok) {
-		this.ok = ok;
-	}
-
 	public String getError() {
 		return error;
 	}
@@ -68,6 +70,14 @@ public class JSONResponse {
 
 	public void setPage(PageResponse page) {
 		this.page = page;
+	}
+
+	public Boolean getOk() {
+		return ok;
+	}
+
+	public void setOk(Boolean ok) {
+		this.ok = ok;
 	}
 
 }

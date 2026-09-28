@@ -6,7 +6,7 @@
 	xmlns:sec="http://www.springframework.org/schema/security"
 	xmlns:ctx="http://www.springframework.org/schema/context"
 	xsi:schemaLocation="http://www.springframework.org/schema/security	 
-      http://www.springframework.org/schema/security/spring-security-4.2.xsd
+      http://www.springframework.org/schema/security/spring-security-5.7.xsd
       http://www.springframework.org/schema/beans 
       http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
       http://www.springframework.org/schema/context
@@ -15,32 +15,6 @@
 	<beans:bean id="restAuthenticationEntryPoint"
 		class="ar.com.avaco.fwk.security.RestAuthenticationEntryPoint"></beans:bean>
 
-<!-- 	<http entry-point-ref="restAuthenticationEntryPoint" -->
-<!-- 		use-expressions="true" create-session="stateless"> -->
-
-<!-- 		<csrf disabled="true" /> -->	
-
-<!-- 		<intercept-url pattern="/auth/**" access="permitAll" /> -->
-<!-- 		<intercept-url pattern="/monitor" method="GET" access="permitAll" /> -->
-<!-- 		<intercept-url pattern="/password/reset" access="permitAll" /> -->
-
-<!-- 		<intercept-url pattern="/swagger-ui.html" access="permitAll" /> -->
-<!-- 		<intercept-url pattern="/swagger-ui/**"	access="permitAll" /> -->
-<!-- 		<intercept-url pattern="/v3/api-docs" access="permitAll" /> -->
-<!-- 		<intercept-url pattern="/v3/api-docs/**" access="permitAll" /> -->
-<!-- 		<intercept-url pattern="/swagger-resources/**"	access="permitAll" /> -->
-<!-- 		<intercept-url pattern="/webjars/**" access="permitAll" /> -->
-<!-- 		<intercept-url pattern="/v2/api-docs" access="permitAll" /> -->
-
-<!-- 		<intercept-url pattern="/auth/reset-password" access="isAuthenticated()" /> -->
-		
-<!-- 		<intercept-url pattern="/**" access="isAuthenticated()" /> -->
-
-<!-- 		<custom-filter ref="tokenFilter" before="FORM_LOGIN_FILTER" /> -->
-
-<!-- 		<logout /> -->
-
-<!-- 	</http> -->
 
 	<beans:bean id="tokenFilter" class="ar.com.avaco.fwk.security.filter.JwtAuthorizationTokenFilter" />
 

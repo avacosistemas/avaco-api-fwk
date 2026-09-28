@@ -9,6 +9,7 @@ import java.util.List;
 import javax.annotation.Resource;
 import javax.transaction.Transactional;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import ar.com.avaco.fwk.core.component.epservice.CRUDEPBaseService;
@@ -29,8 +30,14 @@ import ar.com.avaco.fwk.security.service.UsuarioService;
 public class AccesoEPServiceImpl extends CRUDEPBaseService<Long, AccesoDTO, Acceso, AccesoService>
 		implements AccesoEPService {
 
+	public AccesoEPServiceImpl() {
+		super(Acceso.class, AccesoDTO.class);
+	}
+
+	@Autowired
 	private PerfilService perfilService;
 
+	@Autowired
 	private UsuarioService usuarioService;
 
 	@Override
@@ -51,20 +58,9 @@ public class AccesoEPServiceImpl extends CRUDEPBaseService<Long, AccesoDTO, Acce
 		dto.setIdGrupo(entity.getPerfil().getId());	return dto;
 	}
 
-	@Override
 	@Resource(name = "accesoService")
 	protected void setService(AccesoService service) {
 		this.service = service;
-	}
-
-	@Resource(name = "perfilService")
-	public void setPerfilService(PerfilService perfilService) {
-		this.perfilService = perfilService;
-	}
-
-	@Resource(name = "usuarioService")
-	public void setUsuarioService(UsuarioService usuarioService) {
-		this.usuarioService = usuarioService;
 	}
 
 	@Override

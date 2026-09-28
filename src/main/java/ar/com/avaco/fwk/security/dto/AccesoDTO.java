@@ -1,6 +1,6 @@
 package ar.com.avaco.fwk.security.dto;
 
-import ar.com.avaco.fwk.core.component.dto.DTOEntity;
+import ar.com.avaco.fwk.core.component.dto.entity.DTOEntity;
 
 public class AccesoDTO extends DTOEntity<Long> {
 

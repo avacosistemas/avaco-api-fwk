@@ -9,9 +9,7 @@ import java.util.List;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
-import javax.persistence.CollectionTable;
 import javax.persistence.Column;
-import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -117,22 +115,6 @@ public class Usuario extends ar.com.avaco.fwk.core.domain.Entity<Long> implement
 	 */
 	@Column(name = "FECHA_ALTA_PASSWORD")
 	private Date fechaAltaPassword;
-
-	/**
-	 * Listado de contraseñas empleadas anteriormente.
-	 */
-	@ElementCollection
-	@CollectionTable(name = "HISTORICO_PASSWORDS")
-	private Set<String> historicoPasswords;
-
-//	@Column(length = 40, nullable = false)
-//	private String usuariosap;
-//
-//	@Column(name = "deposito")
-//	private String deposito;
-//	
-//	@Column(name = "LEGAJO")
-//	private Long legajo;
 
 	public Long getId() {
 		return this.id;
@@ -354,20 +336,6 @@ public class Usuario extends ar.com.avaco.fwk.core.domain.Entity<Long> implement
 	 */
 	public void setBloqueado(boolean bloqueado) {
 		this.bloqueado = bloqueado;
-	}
-
-	/**
-	 * @return the historicoPasswords
-	 */
-	public Set<String> getHistoricoPasswords() {
-		return historicoPasswords;
-	}
-
-	/**
-	 * @param historicoPasswords the historicoPasswords to set
-	 */
-	public void setHistoricoPasswords(Set<String> historicoPasswords) {
-		this.historicoPasswords = historicoPasswords;
 	}
 
 	/**

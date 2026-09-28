@@ -33,6 +33,11 @@ import ar.com.avaco.fwk.security.service.UsuarioService;
 public class UsuarioEPServiceImpl extends CRUDEPBaseService<Long, UsuarioDTO, Usuario, UsuarioService>
 		implements UsuarioEPService {
 
+	public UsuarioEPServiceImpl() {
+		super(Usuario.class, UsuarioDTO.class);
+		// TODO Auto-generated constructor stub
+	}
+
 	@Autowired
 	private PerfilService perfilService;
 

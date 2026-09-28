@@ -1,10 +1,10 @@
-package ar.com.avaco.fwk.core.component.dto;
+package ar.com.avaco.fwk.core.component.dto.filter;
 
 public class SortPageDTO {
 
-	private Integer pageSize;
+	private Integer pageSize = 9999;
 
-	private Integer page;
+	private Integer page = 0;
 
 	private Boolean asc;
 

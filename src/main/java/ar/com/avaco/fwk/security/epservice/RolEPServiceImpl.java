@@ -21,6 +21,10 @@ import ar.com.avaco.fwk.security.service.RolService;
 @Service("rolEPService")
 public class RolEPServiceImpl extends CRUDEPBaseService<Long, RolDTO, Rol, RolService> implements RolEPService {
 
+	public RolEPServiceImpl() {
+		super(Rol.class, RolDTO.class);
+	}
+
 	public RolDTO convertToDto(Rol permiso) {
 		return new RolDTO(permiso.getId(), permiso.getCodigo(), permiso.getNombre());
 	}

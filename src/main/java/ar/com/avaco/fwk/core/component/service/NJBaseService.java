@@ -5,6 +5,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+
+import ar.com.avaco.fwk.core.component.dto.entity.DTOEntity;
 import ar.com.avaco.fwk.core.component.repository.NJRepository;
 import ar.com.avaco.fwk.core.domain.Entity;
 import ar.com.avaco.fwk.core.domain.filter.AbstractFilter;
@@ -50,7 +53,7 @@ public abstract class NJBaseService<ID extends Serializable, T extends Entity<ID
 	 * @see NJService#get(Serializable)
 	 */
 	public T get(ID id) {
-		return getRepository().findOne(id);
+		return getRepository().findById(id).orElse(null);
 	}
 
 	/**
@@ -64,7 +67,9 @@ public abstract class NJBaseService<ID extends Serializable, T extends Entity<ID
 	 * @see NJService#remove(Serializable)
 	 */
 	public void remove(ID id) {
-		getRepository().delete(id);
+		 System.out.println("TX READ ONLY = " +
+			        TransactionSynchronizationManager.isCurrentTransactionReadOnly());
+		getRepository().remove(id);
 	}
 
 	@Override
@@ -90,5 +95,29 @@ public abstract class NJBaseService<ID extends Serializable, T extends Entity<ID
 	protected final R getRepository() {
 		return this.repository;
 	}
+	
+	@Override
+	public <ID extends Serializable, D extends DTOEntity<ID>> List<D> listFilter(AbstractFilter abstractFilter,
+			Class<D> targetDTO) {
+		return this.repository.listFilter(abstractFilter, targetDTO);
+	}
+	
+	@Override
+	public List<T> listPattern(String field, String pattern) {
+		return getRepository().listPattern(field, pattern);
+	}
+
+	@Override
+	public List<T> listEqField(String field, Object pattern) {
+		return getRepository().listEqField(field, pattern);
+	}
+	
+	@Override
+	public boolean exists(ID id) {
+		return getRepository().existsById(id);
+	}
+	
+	
+
 	
 }

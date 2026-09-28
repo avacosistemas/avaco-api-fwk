@@ -8,15 +8,20 @@
 		http://www.springframework.org/schema/context
 		http://www.springframework.org/schema/context/spring-context.xsd"> 
    	
+   	<ctx:component-scan base-package="ar.com.avaco.fwk.core.jpa"/>
 
 	<ctx:component-scan base-package="ar.com.avaco.fwk.security.epservice" resource-pattern="**/*ServiceImpl.class"/>
 	<ctx:component-scan	base-package="ar.com.avaco.fwk.security.service" resource-pattern="**/*ServiceImpl.class" />
 	<ctx:component-scan base-package="ar.com.avaco.fwk.security.repository" resource-pattern="**/*RepositoryImpl.class"/>
 
+	<ctx:component-scan	base-package="ar.com.avaco.fwk.commons.epservice" resource-pattern="**/*ServiceImpl.class" />
 	<ctx:component-scan base-package="ar.com.avaco.fwk.commons.service" resource-pattern="**/*ServiceImpl.class"/>
+	<ctx:component-scan base-package="ar.com.avaco.fwk.commons.repository" resource-pattern="**/*ServiceImpl.class"/>
 
 	<bean class="ar.com.avaco.fwk.commons.service.recaptcha.ReCaptchaSettings"> </bean>
 	<bean class="ar.com.avaco.fwk.commons.service.recaptcha.ReCaptchaAttempt"> </bean>
+	
+	<bean id="restTemplate" class="org.springframework.web.client.RestTemplate"> </bean>
 						
 </beans>
 

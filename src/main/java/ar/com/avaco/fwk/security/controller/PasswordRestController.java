@@ -18,7 +18,6 @@ import ar.com.avaco.fwk.core.utils.FunctionBusiness;
 import ar.com.avaco.fwk.security.domain.Usuario;
 import ar.com.avaco.fwk.security.dto.PassworResetDTO;
 import ar.com.avaco.fwk.security.dto.UpdatePasswordDTO;
-import ar.com.avaco.fwk.security.epservice.UsuarioEPService;
 import ar.com.avaco.fwk.security.service.UsuarioService;
 
 @RestController

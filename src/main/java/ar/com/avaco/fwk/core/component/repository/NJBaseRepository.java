@@ -2,11 +2,21 @@ package ar.com.avaco.fwk.core.component.repository;
 
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.List;
 
 import javax.persistence.Embeddable;
+import javax.persistence.Embedded;
 import javax.persistence.EntityManager;
+import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
+import javax.sql.DataSource;
 
 import org.hibernate.Criteria;
 import org.hibernate.NullPrecedence;
@@ -16,15 +26,21 @@ import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Disjunction;
 import org.hibernate.criterion.MatchMode;
 import org.hibernate.criterion.Order;
+import org.hibernate.criterion.ProjectionList;
 import org.hibernate.criterion.Projections;
+import org.hibernate.criterion.PropertyProjection;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.internal.CriteriaImpl;
 import org.hibernate.internal.CriteriaImpl.Subcriteria;
 import org.hibernate.sql.JoinType;
+import org.hibernate.transform.Transformers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
+import org.springframework.jdbc.datasource.DataSourceUtils;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.StringUtils;
 
+import ar.com.avaco.fwk.core.component.dto.entity.DTOEntity;
 import ar.com.avaco.fwk.core.domain.filter.AbstractFilter;
 import ar.com.avaco.fwk.core.domain.filter.FilterData;
 
@@ -35,25 +51,106 @@ public class NJBaseRepository<ID extends Serializable, E extends ar.com.avaco.fw
 	private SessionFactory sessionFactory;
 	private Class<E> javaType;
 
-	private EntityManager entityManager;
-	
+	protected EntityManager entityManager;
+
 	public NJBaseRepository(Class<E> domainClass, EntityManager entityManager) {
 		super(domainClass, entityManager);
 		this.javaType = domainClass;
 		this.entityManager = entityManager;
 	}
-	
-	@Override
+
 	@SuppressWarnings("unchecked")
+	@Override
 	public List<E> listFilter(AbstractFilter abstractFilter) {
 		Criteria criteria = getCurrentSession().createCriteria(getHandledClass());
 		applyFilters(criteria, abstractFilter);
 		applyPagination(criteria, abstractFilter);
 		applyOrdering(criteria, abstractFilter);
-		if (abstractFilter.getDistinctRootEntity() != null && abstractFilter.getDistinctRootEntity().booleanValue()) {
+		if (Boolean.TRUE.equals(abstractFilter.getDistinctRootEntity())) {
 			criteria.setResultTransformer(Criteria.DISTINCT_ROOT_ENTITY);
 		}
 		return criteria.list();
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public <ID extends Serializable, D extends DTOEntity<ID>> List<D> listFilter(AbstractFilter filter,
+			Class<D> dtoClass) {
+
+		Criteria criteria = getCurrentSession().createCriteria(getHandledClass());
+
+		applyFilters(criteria, filter);
+		applyPagination(criteria, filter);
+		applyOrdering(criteria, filter);
+
+		ProjectionList projections = resolveProjection(dtoClass, criteria);
+
+		if (projections != null) {
+			criteria.setProjection(projections);
+			criteria.setResultTransformer(Transformers.aliasToBean(dtoClass));
+		} else if (Boolean.TRUE.equals(filter.getDistinctRootEntity())) {
+			criteria.setResultTransformer(Criteria.DISTINCT_ROOT_ENTITY);
+		}
+
+		return criteria.list();
+	}
+
+	private ProjectionList resolveProjection(Class<?> dtoClass, Criteria criteria) {
+
+		try {
+			Object dtoInstance = dtoClass.getDeclaredConstructor().newInstance();
+			Method method = dtoClass.getMethod("getProjections");
+			ProjectionList pl = (ProjectionList) method.invoke(dtoInstance);
+
+			Field field = ProjectionList.class.getDeclaredField("elements");
+			field.setAccessible(true);
+
+			List<?> projections = (List<?>) field.get(pl);
+
+			for (Object projection : projections) {
+
+				try {
+
+					Field projField = projection.getClass().getDeclaredField("projection");
+					projField.setAccessible(true);
+
+					Object innerProjection = projField.get(projection);
+
+					if (innerProjection instanceof PropertyProjection) {
+
+						Field propertyNameField = PropertyProjection.class.getDeclaredField("propertyName");
+
+						propertyNameField.setAccessible(true);
+
+						String propertyName = (String) propertyNameField.get(innerProjection);
+
+						// Crear aliases necesarios
+						containsAlias(criteria, propertyName);
+
+						// Reemplazar el path original por el aliasado
+						String aliasedProperty = getAliasedProperty(propertyName);
+
+						propertyNameField.set(innerProjection, aliasedProperty);
+
+					}
+
+				} catch (NoSuchFieldException e) {
+					// SQLProjection, AggregateProjection,
+					// CountProjection, etc.
+					continue;
+				}
+			}
+
+			return pl;
+
+		} catch (NoSuchMethodException e) {
+			e.printStackTrace();
+			return null;
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException("Error resolving DTO projection: " + dtoClass.getName(), e);
+		}
 	}
 
 	protected Class<?> getHandledClass() {
@@ -67,7 +164,7 @@ public class NJBaseRepository<ID extends Serializable, E extends ar.com.avaco.fw
 		Long uniqueResult = (Long) criteria.setProjection(Projections.rowCount()).uniqueResult();
 		return uniqueResult.intValue();
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public List<E> listPattern(String field, Object pattern) {
@@ -79,14 +176,14 @@ public class NJBaseRepository<ID extends Serializable, E extends ar.com.avaco.fw
 		}
 		return criteria.list();
 	}
-	
+
 	protected void applyPagination(Criteria criteria, AbstractFilter abstractFilter) {
 		if (abstractFilter.getFirst() != null && abstractFilter.getRows() != null) {
 			criteria.setFirstResult(abstractFilter.getFirst());
 			criteria.setMaxResults(abstractFilter.getRows());
 		}
 	}
-	
+
 	protected void applyOrdering(Criteria criteria, AbstractFilter abstractFilter) {
 		if (abstractFilter.getAsc() != null && !StringUtils.isEmpty(abstractFilter.getSidx())) {
 			criteria = containsAlias(criteria, abstractFilter.getIdx());
@@ -105,23 +202,30 @@ public class NJBaseRepository<ID extends Serializable, E extends ar.com.avaco.fw
 	}
 
 	private String getAliasedProperty(String property) {
+
+		if (!property.contains(".")) {
+			return property;
+		}
+
 		String[] prop = property.split("\\.");
 
-		StringBuilder field = new StringBuilder();
-
-		for (int i = 0 ; i < prop.length; i++) {
-			if (i != 0 && i == prop.length -1) {
-				field.append(".");
-			}
-			field.append(prop[i]);
+		if (prop.length == 2) {
+			return property;
 		}
-		return field.toString();
+
+		StringBuilder alias = new StringBuilder();
+
+		for (int i = 0; i < prop.length - 1; i++) {
+			alias.append(prop[i]);
+		}
+
+		return alias.toString() + "." + prop[prop.length - 1];
 	}
-	
+
 	protected void applyFilters(Criteria criteria, AbstractFilter abstractFilter) {
 
-        for (List<FilterData> fdl : abstractFilter.getOrFilterDatas()) {
-        	Disjunction or = Restrictions.disjunction();
+		for (List<FilterData> fdl : abstractFilter.getOrFilterDatas()) {
+			Disjunction or = Restrictions.disjunction();
 			for (FilterData ofd : fdl) {
 				criteria = containsAlias(criteria, ofd.getProperty());
 				or.add(createCriterion(ofd));
@@ -130,46 +234,47 @@ public class NJBaseRepository<ID extends Serializable, E extends ar.com.avaco.fw
 		}
 
 		List<FilterData> filters = abstractFilter.getFilterDatas();
-		
+
 		for (FilterData data : filters) {
-			criteria = containsAlias(criteria,data.getProperty());
+			criteria = containsAlias(criteria, data.getProperty());
 			Criterion criterion = createCriterion(data);
 			criteria.add(criterion);
 		}
-		
+
 	}
 
 	private Criterion createCriterion(FilterData data) {
-		Criterion criterion = null; 
-		
 		String property = data.getProperty();
 		if (!isPropertyEmbeddable(property)) {
-			property = getAliasedProperty(data.getProperty());
+			property = getAliasedProperty(property);
 		}
-		
+
 		switch (data.getFilterDataType()) {
-			case LESS_THAN:
-				criterion = Restrictions.lt(property, data.getObject());
-				break;
-			case MORE_THAN:
-				criterion = Restrictions.gt(property, data.getObject());
-				break;
-			case EQUALS:
-				criterion = Restrictions.eq(property, data.getObject());
-				break;
-			case LIKE:
-				criterion = Restrictions.ilike(property, data.getObject().toString(), MatchMode.ANYWHERE);
-				break;
-			case EQUALS_LESS_THAN:
-				criterion = Restrictions.le(property, data.getObject());
-				break;
-			case EQUALS_MORE_THAN:
-				criterion = Restrictions.ge(property, data.getObject());
-				break;
+		case LESS_THAN:
+			return Restrictions.lt(property, data.getObject());
+		case MORE_THAN:
+			return Restrictions.gt(property, data.getObject());
+		case EQUALS:
+			return Restrictions.eq(property, data.getObject());
+		case LIKE:
+			return Restrictions.ilike(property, data.getObject().toString(), MatchMode.ANYWHERE);
+		case EQUALS_LESS_THAN:
+			return Restrictions.le(property, data.getObject());
+		case EQUALS_MORE_THAN:
+			return Restrictions.ge(property, data.getObject());
+		case NOT_EQUALS:
+			return Restrictions.not(Restrictions.eq(property, data.getObject()));
+		case IS_NULL:
+			return Restrictions.isNull(property);
+		case IS_NOT_NULL:
+			return Restrictions.isNotNull(property);
+		case IN:
+			return Restrictions.in(property, (Object[]) data.getObject());
+		case NOT_IN:
+			return Restrictions.not(Restrictions.in(property, (Object[]) data.getObject()));
 		default:
-			break;
+			return null;
 		}
-		return criterion;
 	}
 
 	private boolean isPropertyEmbeddable(String property) {
@@ -177,10 +282,10 @@ public class NJBaseRepository<ID extends Serializable, E extends ar.com.avaco.fw
 		if (property.contains(".")) {
 			theProperty = property.substring(0, property.indexOf("."));
 		}
-		
+
 		Class<?> clazz = getHandledClass();
-		
-		Annotation[] lt = null; 
+
+		Annotation[] lt = null;
 		while (clazz != null) {
 			try {
 				lt = clazz.getDeclaredField(theProperty).getType().getAnnotations();
@@ -188,7 +293,8 @@ public class NJBaseRepository<ID extends Serializable, E extends ar.com.avaco.fw
 			} catch (NoSuchFieldException e) {
 				clazz = clazz.getSuperclass();
 				if (clazz.equals(Object.class)) {
-					throw new RuntimeException("Property " + property + " not present in class " + getHandledClass().getName());
+					throw new RuntimeException(
+							"Property " + property + " not present in class " + getHandledClass().getName());
 				}
 			}
 		}
@@ -202,50 +308,92 @@ public class NJBaseRepository<ID extends Serializable, E extends ar.com.avaco.fw
 		return false;
 	}
 
-private Criteria containsAlias(Criteria criteria, String property) {
-		
-		if (!isPropertyEmbeddable(property) && property.contains(".")) {
-			String[] prop = property.split("\\.");
+	private Criteria containsAlias(Criteria criteria, String property) {
 
-			CriteriaImpl ci = (CriteriaImpl) criteria;
+		if (!property.contains(".")) {
+			return criteria;
+		}
 
-			for (int i = 0; i < prop.length - 1; i++) {
+		CriteriaImpl ci = (CriteriaImpl) criteria;
 
-				StringBuilder associationPath = new StringBuilder();
-				StringBuilder alias = new StringBuilder();
+		String[] prop = property.split("\\.");
 
-				for (int j = 0; j <= i; j++) {
+		Class<?> currentClass = getHandledClass();
 
-					associationPath.append(prop[j]);
-					if (j != i) {
-						associationPath.append(".");
-					}
-					alias.append(prop[j]);
-				}
+		String currentPath = "";
+
+		for (int i = 0; i < prop.length - 1; i++) {
+
+			String fieldName = prop[i];
+
+			Field field = findField(currentClass, fieldName);
+
+			if (field == null) {
+				return criteria;
+			}
+
+			boolean association = field.isAnnotationPresent(ManyToOne.class)
+					|| field.isAnnotationPresent(OneToOne.class) || field.isAnnotationPresent(OneToMany.class)
+					|| field.isAnnotationPresent(ManyToMany.class);
+
+			boolean embedded = field.isAnnotationPresent(Embedded.class);
+
+			if (currentPath.isEmpty()) {
+				currentPath = fieldName;
+			} else {
+				currentPath += "." + fieldName;
+			}
+
+			if (association) {
+
+				String alias = currentPath.replace(".", "");
 
 				Iterator<Subcriteria> it = ci.iterateSubcriteria();
+
 				boolean found = false;
+
 				while (it.hasNext() && !found) {
 					Subcriteria next = it.next();
-					found = next.getAlias().equals(alias.toString());
+					found = alias.equals(next.getAlias());
 				}
 
 				if (!found) {
-					criteria.createAlias(associationPath.toString(), alias.toString(), JoinType.LEFT_OUTER_JOIN);
+					criteria.createAlias(currentPath, alias, JoinType.LEFT_OUTER_JOIN);
 				}
 			}
+
+			currentClass = field.getType();
+
+			if (embedded) {
+				continue;
+			}
 		}
+
 		return criteria;
 	}
 
-	protected void initialize(E entity) {
-		// Implementar si es necesario
+	private Field findField(Class<?> clazz, String fieldName) {
+
+		Class<?> current = clazz;
+
+		while (current != null && current != Object.class) {
+
+			try {
+				Field field = current.getDeclaredField(fieldName);
+				field.setAccessible(true);
+				return field;
+			} catch (NoSuchFieldException e) {
+				current = current.getSuperclass();
+			}
+		}
+
+		return null;
 	}
-	
+
 	public Session getCurrentSession() {
 		return sessionFactory.getCurrentSession();
 	}
-	
+
 	/**
 	 * Gets the {@link SessionFactory} that will handle the Hibernate
 	 * {@link org.hibernate.Session}s.
@@ -260,14 +408,77 @@ private Criteria containsAlias(Criteria criteria, String property) {
 	 * Sets the {@link SessionFactory} that will handle the Hibernate
 	 * {@link org.hibernate.Session}s.
 	 * 
-	 * @param sessionFactory
-	 *            The factory.
+	 * @param sessionFactory The factory.
 	 */
 	public void setSessionFactory(SessionFactory sessionFactory) {
 		this.sessionFactory = sessionFactory;
 	}
-	
+
 	protected EntityManager getEntityManager() {
 		return entityManager;
 	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public List<E> listEqField(String field, Object value) {
+		Criteria criteria = getCurrentSession().createCriteria(getHandledClass());
+		if (value == null) {
+			criteria.add(Restrictions.isNull(field));
+		} else {
+			criteria.add(Restrictions.eq(field, value));
+		}
+		return criteria.list();
+	}
+
+	
+	@Autowired
+	private DataSource dataSource;
+	
+	@Override
+	public void remove(ID id) {
+		E entity = findById(id).orElse(null);
+
+		System.out.println("entity = " + entity);
+		System.out.println("TX READ ONLY = " +
+		        TransactionSynchronizationManager.isCurrentTransactionReadOnly());
+		
+		Connection connection = DataSourceUtils.getConnection(dataSource);
+
+		System.out.println("Spring TX READ ONLY = "
+		        + TransactionSynchronizationManager.isCurrentTransactionReadOnly());
+
+		try {
+			System.out.println("JDBC READ ONLY = "
+			        + connection.isReadOnly());
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		try {
+			System.out.println("JDBC URL = "
+			        + connection.getMetaData().getURL());
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		System.out.println("METHOD = " +
+		        this.getClass().getName());
+
+		System.out.println("TX ACTIVE = " +
+		        TransactionSynchronizationManager.isActualTransactionActive());
+
+		System.out.println("TX READ ONLY = " +
+		        TransactionSynchronizationManager.isCurrentTransactionReadOnly());
+
+		System.out.println("TX NAME = " +
+		        TransactionSynchronizationManager.getCurrentTransactionName());
+		
+		if (entity != null) {
+			delete(entity);
+			entityManager.flush();
+		}
+	}
+
 }

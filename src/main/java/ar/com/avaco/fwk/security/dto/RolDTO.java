@@ -5,7 +5,7 @@ package ar.com.avaco.fwk.security.dto;
 
 import java.io.Serializable;
 
-import ar.com.avaco.fwk.core.component.dto.DTOEntity;
+import ar.com.avaco.fwk.core.component.dto.entity.DTOEntity;
 
 /**
  * @author avaco

@@ -5,7 +5,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import ar.com.avaco.fwk.core.component.dto.DTOEntity;
+import org.modelmapper.ModelMapper;
+
+import ar.com.avaco.fwk.core.component.dto.PageDTO;
+import ar.com.avaco.fwk.core.component.dto.entity.DTOEntity;
 import ar.com.avaco.fwk.core.component.service.NJService;
 import ar.com.avaco.fwk.core.domain.Entity;
 import ar.com.avaco.fwk.core.domain.filter.AbstractFilter;
@@ -16,12 +19,24 @@ public abstract class CRUDEPBaseService<ID extends Serializable, DTO extends DTO
 
 	protected S service;
 
+	protected final ModelMapper modelMapper = new ModelMapper();
+	
+	private final Class<DTO> dtoClass;
+	private final Class<T> entityClass;
+
+	public CRUDEPBaseService(Class<T> theEntityClass, Class<DTO> theDtoClass) {
+		dtoClass = theDtoClass;
+		entityClass = theEntityClass;
+	}
+	
 	@Override
 	public DTO save(DTO dto) throws BusinessException {
 		validationSave(dto);
-		T entity = convertToEntity(dto);
-		entity = service.save(entity);
-		return convertToDto(entity);
+		T entity = convertToEntityForSave(dto);
+		service.save(entity);
+		T saved = service.get(entity.getId());
+		DTO convertToDto = convertToDto(saved);
+		return convertToDto;
 	}
 
 	protected void validationSave(DTO dto) {
@@ -34,9 +49,10 @@ public abstract class CRUDEPBaseService<ID extends Serializable, DTO extends DTO
 
 	@Override
 	public DTO update(DTO dto) throws BusinessException {
-		T entity = convertToEntity(dto);
+		T entity = convertToEntityForUpdate(dto);
 		entity = service.update(entity);
-		return convertToDto(entity);
+		DTO convertToDto = convertToDto(entity);
+		return convertToDto;
 	}
 
 	@Override
@@ -66,7 +82,7 @@ public abstract class CRUDEPBaseService<ID extends Serializable, DTO extends DTO
 
 	@Override
 	public int listCount(AbstractFilter abstractFilter) {
-		return 0;
+		return this.service.listCount(abstractFilter);
 	}
 
 	@Override
@@ -80,14 +96,28 @@ public abstract class CRUDEPBaseService<ID extends Serializable, DTO extends DTO
 		return convertToDtos(listPattern);
 	}
 
-	abstract protected T convertToEntity(DTO dto);
+	protected T convertToEntity(DTO dto) {
+		return modelMapper.map(dto, entityClass);
+	}
 
-	abstract protected DTO convertToDto(T entity);
+	protected DTO convertToDto(T entity) {
+		return modelMapper.map(entity, dtoClass);
+	}
 
+	protected T convertToEntityForSave(DTO dto) {
+		return convertToEntity(dto);
+	}
+
+	protected T convertToEntityForUpdate(DTO dto) {
+		return convertToEntity(dto);
+	}
+
+	
 	public List<T> convertToEntities(Collection<DTO> dtos) {
 		List<T> entities = new ArrayList<T>();
 		for (DTO dto : dtos) {
-			entities.add(convertToEntity(dto));
+			T convertToEntity = convertToEntity(dto);
+			entities.add(convertToEntity);
 		}
 		return entities;
 	}
@@ -100,10 +130,38 @@ public abstract class CRUDEPBaseService<ID extends Serializable, DTO extends DTO
 		return dtos;
 	}
 
-	protected final S getService() {
+	protected S getService() {
 		return this.service;
 	}
 
 	protected abstract void setService(S service);
 
+	@Override
+	public PageDTO<DTO> listFilterCount(AbstractFilter abstractFilter) {
+		PageDTO<DTO> page = new PageDTO<DTO>();
+		List<DTO> listFilter = listFilter(abstractFilter);
+		int listCount = listCount(abstractFilter);
+		page.setList(listFilter);
+		page.setTotalReg(listCount);
+		page.setPage(abstractFilter.getFirst());
+		page.setPageSize(abstractFilter.getRows());
+		return page;
+	}
+
+	@Override
+	public <ID extends Serializable, D extends DTOEntity<ID>> PageDTO<D> listFilterCount(AbstractFilter abstractFilter,
+			Class<D> targetDTO) {
+		PageDTO<D> page = new PageDTO<>();
+		List<D> listFilter = this.service.listFilter(abstractFilter, targetDTO);
+		int listCount = listCount(abstractFilter);
+		page.setList(listFilter);
+		page.setTotalReg(listCount);
+		return page;
+	}
+	
+	@Override
+	public List<DTO> listEq(String field, Object value) {
+		return convertToDtos(this.service.listEqField(field, value));
+	}
+	
 }

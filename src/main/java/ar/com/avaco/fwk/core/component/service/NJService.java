@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 
+import ar.com.avaco.fwk.core.component.dto.entity.DTOEntity;
+import ar.com.avaco.fwk.core.component.repository.NJRepository;
 import ar.com.avaco.fwk.core.domain.Entity;
 import ar.com.avaco.fwk.core.domain.filter.AbstractFilter;
 
@@ -74,5 +76,14 @@ public interface NJService<ID extends Serializable, T extends Entity<ID>> {
 	
 	List<T> listPattern(String field, Object pattern);
 
+	List<T> listPattern(String field, String pattern);
+
+	List<T> listEqField(String field, Object pattern);
+
+	<ID extends Serializable, D extends DTOEntity<ID>> List<D> listFilter(AbstractFilter abstractFilter,
+			Class<D> targetDTO);
+
+	boolean exists(ID id);
+	
 	
 }

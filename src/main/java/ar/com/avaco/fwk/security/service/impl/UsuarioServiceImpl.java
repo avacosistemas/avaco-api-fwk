@@ -34,22 +34,22 @@ public class UsuarioServiceImpl extends NJBaseService<Long, Usuario, UsuarioRepo
 	private static final String USER_NEWPASSWORD_EQUALS_CURRENT = "user.newpassword.currentpassword.equals";
 	private static final String USER_CURRENT_PASSWORD_INVALID = "user.currentpassword.invalid";
 
-	@Value("${email.from}")
+	@Value("${email.from.registro.usuario}")
 	private String from;
 
-	@Value("${email.cc}")
+	@Value("${email.cc.registro.usuario}")
 	private String cc;
 	
-	@Value("${email.subject.register}")
+	@Value("${email.subject.registro.usuario}")
 	private String subjectRegister;
 
-	@Value("${email.body.register}")
+	@Value("${email.body.registro.usuario}")
 	private String bodyRegister;
 
-	@Value("${email.subject.resetPassword}")
+	@Value("${email.subject.reset.password}")
 	private String subjectResetPassword;
 	
-	@Value("${email.body.resetPassword}")
+	@Value("${email.body.reset.password}")
 	private String bodyResetPassword;
 	
 	/**
@@ -158,7 +158,7 @@ public class UsuarioServiceImpl extends NJBaseService<Long, Usuario, UsuarioRepo
 
 	@Override
 	public void sendMissingPasswordById(Long id) {
-		Usuario user = getRepository().findOne(id);
+		Usuario user = getRepository().findById(id).orElse(null);
 
 		if (user != null) {
 			generateNewPassword(user);
@@ -199,7 +199,7 @@ public class UsuarioServiceImpl extends NJBaseService<Long, Usuario, UsuarioRepo
 	}
 
 	public Usuario findById(Long id) {
-		return getRepository().findOne(id);
+		return getRepository().findById(id).orElse(null);
 	}
 
 	@Override

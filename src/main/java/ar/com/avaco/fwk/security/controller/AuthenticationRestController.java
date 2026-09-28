@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import ar.com.avaco.fwk.core.component.controller.BaseController;
+import ar.com.avaco.fwk.core.component.dto.JSONResponse;
 import ar.com.avaco.fwk.security.JwtTokenUtil;
 import ar.com.avaco.fwk.security.domain.Usuario;
 import ar.com.avaco.fwk.security.dto.JwtAuthenticationRequest;
@@ -27,7 +29,7 @@ import ar.com.avaco.fwk.security.epservice.JwtUserDetailsService;
 import ar.com.avaco.fwk.security.exception.AuthenticationException;
 
 @RestController
-public class AuthenticationRestController {
+public class AuthenticationRestController extends BaseController {
 
 	@Value("${jwt.header}")
 	private String tokenHeader;
@@ -42,7 +44,7 @@ public class AuthenticationRestController {
 	private JwtUserDetailsService userDetailsService;
 
 	@RequestMapping(value = "/auth", method = RequestMethod.POST)
-	public ResponseEntity<JwtAuthenticationResponse> createAuthenticationToken(
+	public ResponseEntity<JSONResponse> createAuthenticationToken(
 			@RequestBody JwtAuthenticationRequest authenticationRequest) throws AuthenticationException {
 
 		try {
@@ -56,7 +58,9 @@ public class AuthenticationRestController {
 
 			Usuario usuario = (Usuario) userDetails;
 
-			return ResponseEntity.status(HttpStatus.CONFLICT).body(new JwtAuthenticationResponse(token, usuario, true));
+			JwtAuthenticationResponse data = new JwtAuthenticationResponse(token, usuario, true);
+
+			return CONFLICT(data);
 		}
 
 		// Reload password post-security so we can generate the token
@@ -67,7 +71,9 @@ public class AuthenticationRestController {
 		Usuario usuario = (Usuario) userDetails;
 
 		// Return the token and user datas
-		return ResponseEntity.ok(new JwtAuthenticationResponse(token, usuario, false));
+		JwtAuthenticationResponse body = new JwtAuthenticationResponse(token, usuario, false);
+
+		return OKDATA(body);
 	}
 
 	@RequestMapping(value = "/authAdmin", method = RequestMethod.POST)
@@ -93,24 +99,17 @@ public class AuthenticationRestController {
 	}
 
 	@RequestMapping(value = "/refresh", method = RequestMethod.POST)
-	public ResponseEntity<?> refreshAndGetAuthenticationToken(HttpServletRequest request) {
-
+	public ResponseEntity<JSONResponse> refreshAndGetAuthenticationToken(HttpServletRequest request) {
 		String authToken = request.getHeader(tokenHeader);
 		final String token = authToken.substring(7);
-
 		String username = jwtTokenUtil.getUsernameFromToken(token);
-
 		Usuario usuario = (Usuario) userDetailsService.loadUserByUsername(username);
-
 		if (jwtTokenUtil.canTokenBeRefreshed(token, usuario.getFechaAltaPassword())) {
-
 			String refreshedToken = jwtTokenUtil.refreshToken(token);
-
-			return ResponseEntity.ok(new JwtAuthenticationResponse(refreshedToken, usuario, false));
-
-		} else {
-			return ResponseEntity.badRequest().body(null);
+			JwtAuthenticationResponse data = new JwtAuthenticationResponse(refreshedToken, usuario, false);
+			return OKDATA(data);
 		}
+		return CONFLICT(new JSONResponse());
 	}
 
 	@RequestMapping(value = "/user", method = RequestMethod.GET)
@@ -126,7 +125,7 @@ public class AuthenticationRestController {
 		userAutho.setAccountNonLocked(user.isAccountNonLocked());
 		userAutho.setCredentialsNonExpired(user.isCredentialsNonExpired());
 		userAutho.setEnabled(user.isEnabled());
-		return ResponseEntity.ok(userAutho);
+		return OKDATA(userAutho);
 	}
 
 	@ExceptionHandler({ AuthenticationException.class })

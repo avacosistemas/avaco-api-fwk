@@ -10,5 +10,10 @@ public enum FilterDataType {
 	EQUALS, 
 	LIKE, 
 	EQUALS_LESS_THAN, 
-	EQUALS_MORE_THAN;
+	EQUALS_MORE_THAN,
+	NOT_EQUALS,
+	IS_NULL,
+	IS_NOT_NULL,
+	IN,
+	NOT_IN;
 }

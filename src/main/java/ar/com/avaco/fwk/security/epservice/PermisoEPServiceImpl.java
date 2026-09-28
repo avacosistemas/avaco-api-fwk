@@ -22,6 +22,10 @@ import ar.com.avaco.fwk.security.service.PermisoService;
 public class PermisoEPServiceImpl extends CRUDEPBaseService<Long, PermisoDTO, Permiso, PermisoService>
 		implements PermisoEPService {
 
+	public PermisoEPServiceImpl() {
+		super(Permiso.class, PermisoDTO.class);
+	}
+
 	public PermisoDTO convertToDto(Permiso permiso) {
 		return new PermisoDTO(permiso.getId(), permiso.getCodigo(), permiso.getDescripcion(),
 				permiso.getAuthority() != null);

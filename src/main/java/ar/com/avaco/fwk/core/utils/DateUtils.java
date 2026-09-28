@@ -14,9 +14,11 @@ import java.util.Date;
 
 public class DateUtils {
 
-	public final static String PATTERN_yyyyMMdd = "yyyyMMdd";
-	public final static String PATTERN_FULL_24_HS = "dd/MM/yyyy HH:mm:ss";
-	public final static String PATTERN_ddMMyyyy = "dd/MM/yyyy";
+	public static SimpleDateFormat dateFormat = (SimpleDateFormat) DateFormat.getInstance();
+	public static DateTimeFormatter DATE_TIME_FORMATTER_DD_MM_YYYY = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+	public static final String PATTERN_yyyyMMdd = "yyyyMMdd";
+	public static final String PATTERN_dd_MM_yy_HH_mm = "dd/MM/yyyy HH:mm:ss";
+	public static final String PATTERN_dd_MM_yyyy = "dd/MM/yyyy";
 
 	public static Date toDate(LocalDate date) {
 		return Date.from(date.atStartOfDay(ZoneId.systemDefault()).toInstant());
@@ -52,9 +54,12 @@ public class DateUtils {
 	}
 
 	public static String toString(Date fecha, String pattern) {
-		SimpleDateFormat dateFormat = (SimpleDateFormat) DateFormat.getInstance();
-		dateFormat.applyPattern(pattern);
-		return dateFormat.format(fecha);
+		if (fecha != null) {
+			SimpleDateFormat dateFormat = (SimpleDateFormat) DateFormat.getInstance();
+			dateFormat.applyPattern(pattern);
+			return dateFormat.format(fecha);
+		}
+		return null;
 	}
 
 	public static String toString(LocalDate fecha) {
@@ -67,7 +72,7 @@ public class DateUtils {
 		Calendar cal = Calendar.getInstance();
 		return cal.getTime();
 	}
-	
+
 	public static Date setearHoraCero(Date fecha) {
 		Calendar anteriorCal = Calendar.getInstance();
 		anteriorCal.setTime(fecha);
@@ -76,19 +81,19 @@ public class DateUtils {
 		anteriorCal.set(Calendar.SECOND, 0);
 		return anteriorCal.getTime();
 	}
-	
+
 	public static String convertirSinTimeZome(String fechaStr) {
 		LocalDate fecha;
 		if (fechaStr.contains("T")) {
-		    fecha = OffsetDateTime.parse(fechaStr).toLocalDate();
+			fecha = OffsetDateTime.parse(fechaStr).toLocalDate();
 		} else {
-		    fecha = LocalDate.parse(fechaStr);
+			fecha = LocalDate.parse(fechaStr);
 		}
 
-		String fechaFormateada = fecha.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));  
-        return fechaFormateada;
+		String fechaFormateada = fecha.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+		return fechaFormateada;
 	}
-	
+
 	public static int convertirATotalSegundos(String tiempo) {
 		String[] partes = tiempo.split(":");
 		int horas = Integer.parseInt(partes[0]);
@@ -106,10 +111,12 @@ public class DateUtils {
 	}
 
 	public static String calcularDiferenciaHorario(String desde, String hasta) {
-		
-		if (desde.length() != 8) desde = desde  + ":00";
-		if (hasta.length() != 8) hasta = hasta  + ":00";
-		
+
+		if (desde.length() != 8)
+			desde = desde + ":00";
+		if (hasta.length() != 8)
+			hasta = hasta + ":00";
+
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
 		LocalTime horaHasta = LocalTime.parse(hasta.trim(), formatter);
 		LocalTime horaDesde = LocalTime.parse(desde.trim(), formatter);

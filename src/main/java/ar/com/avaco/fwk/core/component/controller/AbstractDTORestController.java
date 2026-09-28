@@ -14,8 +14,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import ar.com.avaco.fwk.core.component.dto.DTOEntity;
 import ar.com.avaco.fwk.core.component.dto.JSONResponse;
+import ar.com.avaco.fwk.core.component.dto.entity.DTOEntity;
 import ar.com.avaco.fwk.core.component.epservice.CRUDEPService;
 import ar.com.avaco.fwk.core.exception.BusinessException;
 import ar.com.avaco.fwk.core.utils.FunctionBusiness;
@@ -24,7 +24,7 @@ import ar.com.avaco.fwk.core.utils.SupplierBusiness;
 /**
  * @author avaco
  */
-public abstract class AbstractDTORestController<RDTO extends DTOEntity<ID>, ID extends Serializable, T extends CRUDEPService<ID,RDTO>> {	
+public abstract class AbstractDTORestController<RDTO extends DTOEntity<ID>, ID extends Serializable, T extends CRUDEPService<ID,RDTO>> extends BaseController {	
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(AbstractDTORestController.class);
 	protected static final String ENTITY_WITH_ID_0_NOT_FOUND = "Entity with id {0} not found";

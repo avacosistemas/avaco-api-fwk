@@ -3,8 +3,14 @@ package ar.com.avaco.fwk.core.domain.filter;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.modelmapper.ModelMapper;
+
+import ar.com.avaco.fwk.core.component.dto.filter.SortPageDTO;
+
 public abstract class AbstractFilter {
 
+	protected final ModelMapper modelMapper = new ModelMapper();
+	
 	private Integer rows;
 
 	private Integer first;
@@ -15,6 +21,14 @@ public abstract class AbstractFilter {
 	
 	private Boolean distinctRootEntity;
 
+	public AbstractFilter(SortPageDTO spdto) {
+		super();
+		this.rows = spdto.getPageSize();
+		this.first = spdto.getPage();
+		this.asc = spdto.getAsc();
+		this.idx = spdto.getIdx();
+	}
+	
 	public AbstractFilter(Integer rows, Integer first, Boolean asc, String idx) {
 		super();
 		this.rows = rows;
