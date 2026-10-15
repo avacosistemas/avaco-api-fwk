@@ -20,6 +20,7 @@ import ar.com.avaco.fwk.security.dto.PerfilDTO;
 import ar.com.avaco.fwk.security.dto.PermisoDTO;
 import ar.com.avaco.fwk.security.dto.RolDTO;
 import ar.com.avaco.fwk.security.service.PerfilService;
+import ar.com.avaco.fwk.security.service.PermisoService;
 import ar.com.avaco.fwk.security.service.RolService;
 
 /**
@@ -35,6 +36,9 @@ public class PerfilEPServiceImpl extends CRUDEPBaseService<Long, PerfilDTO, Perf
 		super(Perfil.class, PerfilDTO.class);
 	}
 
+	@Autowired
+	private PermisoService permisoService;
+	
 	@Autowired
 	private RolService rolService;
 
@@ -69,14 +73,14 @@ public class PerfilEPServiceImpl extends CRUDEPBaseService<Long, PerfilDTO, Perf
 
 		entity.setNombre(dto.getName());
 
-//		//FIXME Por default tiene el rol ADM, modificar cuando se requiera
-//		List<Permiso> permisos = new  ArrayList<>();
-//		for(PermisoDTO permission :dto.getPermissions()) {
-//			Permiso p = new Permiso();
-//			p.setId(permission.getId());
-//			permisos.add(permisoEPService.convertToEntity(p, permission));
-//		}
-//		entity.getPermisos().addAll(permisos);
+		//FIXME Por default tiene el rol ADM, modificar cuando se requiera
+		List<Permiso> permisos = new  ArrayList<>();
+		for(PermisoDTO permission :dto.getPermissions()) {
+			Permiso p = new Permiso();
+			p.setId(permission.getId());
+			permisos.add(permisoService.get(permission.getId()));
+		}
+		entity.getPermisos().addAll(permisos);
 		return entity;
 	}
 

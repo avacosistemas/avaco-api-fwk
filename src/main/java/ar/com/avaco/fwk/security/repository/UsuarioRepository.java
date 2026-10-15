@@ -9,15 +9,18 @@ import ar.com.avaco.fwk.core.component.repository.NJRepository;
 import ar.com.avaco.fwk.security.domain.Usuario;
 
 public interface UsuarioRepository extends NJRepository<Long, Usuario>, UsuarioRepositoryCustom {
-	
+
 	Usuario findByUsername(String username);
 
 	Usuario findByEmail(String email);
 
-	@Query("SELECT CASE WHEN COUNT(u) > 0 THEN TRUE ELSE FALSE END " +
-		       "FROM Usuario u WHERE u.email = :email")
+	@Query("SELECT CASE WHEN COUNT(u) > 0 THEN TRUE ELSE FALSE END " + "FROM Usuario u WHERE u.email = :email")
 	boolean isUserExistWithEmail(@Param("email") String email);
 
 	List<Usuario> findByIdIn(List<Long> lista);
-		
+
+	@Query("SELECT DISTINCT u FROM Usuario u JOIN u.accesos a JOIN a.perfil p "
+			+ "JOIN p.permisos permiso WHERE permiso.codigo = :codigo")
+	List<Usuario> findByPermiso(@Param("codigo") String codigo);
+
 }

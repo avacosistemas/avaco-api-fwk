@@ -3,11 +3,10 @@ package ar.com.avaco.fwk.security.domain;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
+import org.hibernate.annotations.GenericGenerator;
 import org.springframework.security.core.GrantedAuthority;
 
 /**
@@ -17,13 +16,16 @@ import org.springframework.security.core.GrantedAuthority;
  */
 @Entity
 @Table(name = "SEG_PERMISO")
-@SequenceGenerator(name = "SEG_PERMISO_SEQ", sequenceName = "SEG_PERMISO_SEQ", allocationSize = 1)
 public class Permiso extends ar.com.avaco.fwk.core.domain.Entity<Long> implements GrantedAuthority {
 
 	private static final long serialVersionUID = 64072452532029953L;
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEG_PERMISO_SEQ")
+	@GeneratedValue(generator = "SEG_PERMISO_SEQ")
+	@GenericGenerator(name = "SEG_PERMISO_SEQ", strategy = "org.hibernate.id.enhanced.SequenceStyleGenerator", parameters = {
+			@org.hibernate.annotations.Parameter(name = "sequence_name", value = "SEG_PERMISO_SEQ"),
+			@org.hibernate.annotations.Parameter(name = "initial_value", value = "1"),
+			@org.hibernate.annotations.Parameter(name = "increment_size", value = "1") })
 	@Column(name="ID_SEG_PERMISO")
 	private Long id;
 

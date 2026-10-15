@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 
+import ar.com.avaco.fwk.core.component.dto.CustomDTO;
 import ar.com.avaco.fwk.core.component.dto.PageDTO;
 import ar.com.avaco.fwk.core.component.dto.entity.DTOEntity;
 import ar.com.avaco.fwk.core.domain.filter.AbstractFilter;
@@ -13,7 +14,7 @@ public interface CRUDEPService<ID extends Serializable, DTO extends DTOEntity<ID
 
 	DTO save(DTO entity) throws BusinessException;
 
-	DTO update(DTO entity) throws BusinessException ;
+	DTO update(DTO entity) throws BusinessException;
 
 	List<DTO> save(Collection<DTO> entities);
 
@@ -30,7 +31,10 @@ public interface CRUDEPService<ID extends Serializable, DTO extends DTOEntity<ID
 	List<DTO> listPattern(String field, Object pattern);
 
 	PageDTO<DTO> listFilterCount(AbstractFilter abstractFilter);
-	
+
+	<E, CDTO extends DTOEntity<?> & CustomDTO<E>> PageDTO<CDTO> listFilterCountCustom(AbstractFilter abstractFilter,
+			Class<CDTO> cdto);
+
 	List<DTO> listEq(String field, Object value);
 
 	<ID extends Serializable, D extends DTOEntity<ID>> PageDTO<D> listFilterCount(AbstractFilter abstractFilter,

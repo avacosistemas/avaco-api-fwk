@@ -59,6 +59,8 @@ public interface UsuarioService extends NJService<Long, Usuario> {
 	String encodePassword(String tmppass);
 
 	void notifyPasswordNewUser(Usuario user, String tmpass);
+
+	List<Usuario> findByPermiso(String permiso);
 	
 }
 

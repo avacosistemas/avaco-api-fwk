@@ -19,7 +19,7 @@ public abstract class AbstractFilter {
 
 	private String idx;
 	
-	private Boolean distinctRootEntity;
+	private Boolean distinctRootEntity = true;
 
 	public AbstractFilter(SortPageDTO spdto) {
 		super();
@@ -66,10 +66,6 @@ public abstract class AbstractFilter {
 
 	public Boolean isAsc() {
 		return asc;
-	}
-
-	public String getSidx() {
-		return idx;
 	}
 
 	public Boolean getAsc() {

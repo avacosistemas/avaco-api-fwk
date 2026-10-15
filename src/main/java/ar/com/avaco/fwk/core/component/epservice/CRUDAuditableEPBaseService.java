@@ -11,7 +11,6 @@ import ar.com.avaco.fwk.core.component.dto.entity.DTOAuditableEntity;
 import ar.com.avaco.fwk.core.component.service.NJService;
 import ar.com.avaco.fwk.core.domain.AuditableEntity;
 
-@Transactional
 public abstract class CRUDAuditableEPBaseService<ID extends Serializable, DTO extends DTOAuditableEntity<ID>, T extends AuditableEntity<ID>, S extends NJService<ID, T>>
 		extends CRUDEPBaseService<ID, DTO, T, S> {
 

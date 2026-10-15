@@ -10,7 +10,7 @@ import ar.com.avaco.fwk.commons.dto.AyudaDinamicaDTO;
 import ar.com.avaco.fwk.commons.service.AyudaDinamicaService;
 import ar.com.avaco.fwk.core.component.epservice.CRUDAuditableEPBaseService;
 
-@Transactional
+//@Transactional
 @Service("ayudaDinamicaEPService")
 public class AyudaDinamicaEPServiceImpl extends CRUDAuditableEPBaseService<Long, AyudaDinamicaDTO, AyudaDinamica, AyudaDinamicaService>
 		implements AyudaDinamicaEPService {

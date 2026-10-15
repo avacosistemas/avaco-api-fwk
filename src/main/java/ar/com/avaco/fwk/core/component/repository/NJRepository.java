@@ -26,4 +26,6 @@ public interface NJRepository<ID extends Serializable, E extends Entity<ID>> ext
 
 	@Transactional(readOnly = false)
 	void remove(ID id);
+
+	E getDetached(ID id);
 }

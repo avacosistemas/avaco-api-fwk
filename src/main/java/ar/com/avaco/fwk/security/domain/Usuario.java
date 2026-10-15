@@ -20,13 +20,13 @@ import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
+import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
 import org.springframework.security.core.GrantedAuthority;
 
 @Entity
 @Table(name = "SEG_USUARIO")
-@SequenceGenerator(name = "SEG_USUARIO_SEQ", sequenceName = "SEG_USUARIO_SEQ", allocationSize = 1)
 @Inheritance(strategy = InheritanceType.JOINED)
 public class Usuario extends ar.com.avaco.fwk.core.domain.Entity<Long> implements UserDetailsExtended {
 
@@ -43,8 +43,13 @@ public class Usuario extends ar.com.avaco.fwk.core.domain.Entity<Long> implement
 	 */
 	private static final int CANTIDAD_MAXIMA_DIAS_PASSWORD = 999999;
 
+	
 	@Id
-	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEG_USUARIO_SEQ")
+	@GeneratedValue(generator = "SEG_USUARIO_SEQ")
+	@GenericGenerator(name = "SEG_USUARIO_SEQ", strategy = "org.hibernate.id.enhanced.SequenceStyleGenerator", parameters = {
+			@org.hibernate.annotations.Parameter(name = "sequence_name", value = "SEG_USUARIO_SEQ"),
+			@org.hibernate.annotations.Parameter(name = "initial_value", value = "1"),
+			@org.hibernate.annotations.Parameter(name = "increment_size", value = "1") })
 	@Column(name = "ID_SEG_USUARIO")
 	private Long id;
 

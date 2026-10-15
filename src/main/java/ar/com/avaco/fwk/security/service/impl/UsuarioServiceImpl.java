@@ -217,6 +217,11 @@ public class UsuarioServiceImpl extends NJBaseService<Long, Usuario, UsuarioRepo
 	}
 
 	@Override
+	public List<Usuario> findByPermiso(String permiso) {
+		return this.repository.findByPermiso(permiso);
+	}
+	
+	@Override
 	public List<Usuario> getByIds(List<Long> lista) {
 		return this.repository.findByIdIn(lista);
 	}

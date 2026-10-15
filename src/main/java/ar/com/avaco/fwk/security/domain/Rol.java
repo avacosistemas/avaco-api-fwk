@@ -3,10 +3,10 @@ package ar.com.avaco.fwk.security.domain;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+
+import org.hibernate.annotations.GenericGenerator;
 
 /**
  * Un RolCompania representa el tipo de posicion de un usuario dentro de la
@@ -18,14 +18,17 @@ import javax.persistence.Table;
  */
 @Entity
 @Table(name = "SEG_ROL")
-@SequenceGenerator(name = "SEG_ROL_SEQ", sequenceName = "SEG_ROL_SEQ", allocationSize = 1)
 public class Rol extends ar.com.avaco.fwk.core.domain.Entity<Long> {
 
 	/** */
 	private static final long serialVersionUID = -905096204577279657L;
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEG_ROL_SEQ")
+	@GeneratedValue(generator = "SEG_ROL_SEQ")
+	@GenericGenerator(name = "SEG_ROL_SEQ", strategy = "org.hibernate.id.enhanced.SequenceStyleGenerator", parameters = {
+			@org.hibernate.annotations.Parameter(name = "sequence_name", value = "SEG_ROL_SEQ"),
+			@org.hibernate.annotations.Parameter(name = "initial_value", value = "1"),
+			@org.hibernate.annotations.Parameter(name = "increment_size", value = "1") })
 	@Column(name = "ID_SEG_ROL")
 	private Long id;
 

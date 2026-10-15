@@ -79,13 +79,14 @@ public class MailSenderSMTPServiceImpl implements MailSenderSMTPService {
 			StringBuilder sbText = new StringBuilder();
 
 			helper.setFrom(from);
-			if (to == null) {
+			
+			if (to == null || to.length == 0) {
 				throw new MessagingException("No esta seteado el destinatario");
-			}
-			if (to != null) {
+			} else {
 				helper.setTo(to);
 			}
-			if (bccTo != null) {
+			
+			if (bccTo != null && bccTo.length > 0) {
 				helper.setBcc(bccTo);
 			}
 

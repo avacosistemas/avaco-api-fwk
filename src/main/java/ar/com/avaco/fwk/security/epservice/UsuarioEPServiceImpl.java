@@ -5,6 +5,7 @@ package ar.com.avaco.fwk.security.epservice;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -35,7 +36,6 @@ public class UsuarioEPServiceImpl extends CRUDEPBaseService<Long, UsuarioDTO, Us
 
 	public UsuarioEPServiceImpl() {
 		super(Usuario.class, UsuarioDTO.class);
-		// TODO Auto-generated constructor stub
 	}
 
 	@Autowired
@@ -56,16 +56,39 @@ public class UsuarioEPServiceImpl extends CRUDEPBaseService<Long, UsuarioDTO, Us
 	}
 
 	@Override
-	public Usuario convertToEntity(UsuarioDTO dto) {
-		Usuario entity = new Usuario();
+	protected Usuario convertToEntityForUpdate(UsuarioDTO dto) {
+		Usuario entity = this.service.get(dto.getId());
 		entity.setApellido(dto.getLastname());
 		entity.setEmail(dto.getEmail());
 		entity.setNombre(dto.getName());
 		entity.setUsername(dto.getUsername());
 		entity.setBloqueado(!dto.isEnabled());
 		entity.setAdmin(dto.getAdmin());
+		entity.getAccesos().clear();
 		if (dto.getProfiles() != null) {
-			Set<Acceso> accesos = new HashSet<>();
+			dto.getProfiles().stream().forEach(e -> {
+				Acceso acceso = new Acceso();
+				Perfil p = perfilService.get(e.getId());
+				acceso.setPerfil(p);
+				acceso.setUsuario(entity);
+				entity.getAccesos().add(acceso);
+			});
+		}
+		return entity;
+	}
+
+	@Override
+	public Usuario convertToEntityForSave(UsuarioDTO dto) {
+		Usuario entity = new Usuario();
+		entity.setId(dto.getId());
+		entity.setApellido(dto.getLastname());
+		entity.setEmail(dto.getEmail());
+		entity.setNombre(dto.getName());
+		entity.setUsername(dto.getUsername());
+		entity.setBloqueado(!dto.isEnabled());
+		entity.setAdmin(dto.getAdmin());
+		Set<Acceso> accesos = new HashSet<>();
+		if (dto.getProfiles() != null) {
 			dto.getProfiles().stream().forEach(e -> {
 				Acceso acceso = new Acceso();
 				Perfil p = perfilService.get(e.getId());
@@ -73,8 +96,8 @@ public class UsuarioEPServiceImpl extends CRUDEPBaseService<Long, UsuarioDTO, Us
 				acceso.setUsuario(entity);
 				accesos.add(acceso);
 			});
-			entity.setAccesos(accesos);
 		}
+		entity.setAccesos(accesos);
 		return entity;
 	}
 
@@ -95,6 +118,12 @@ public class UsuarioEPServiceImpl extends CRUDEPBaseService<Long, UsuarioDTO, Us
 		if (!errores.isEmpty()) {
 			throw new ErrorValidationException("Se han encontrado errores de negocio en el objeto analizado", errores);
 		}
+	}
+
+	@Override
+	public List<UsuarioDTO> findByPermiso(String permiso) {
+		List<Usuario> usuarios = this.service.findByPermiso(permiso);
+		return this.convertToDtos(usuarios);
 	}
 
 	@Override

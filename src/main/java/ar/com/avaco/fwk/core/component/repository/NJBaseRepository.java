@@ -4,10 +4,11 @@ import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.sql.Connection;
-import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import javax.persistence.Embeddable;
 import javax.persistence.Embedded;
@@ -16,7 +17,6 @@ import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
-import javax.sql.DataSource;
 
 import org.hibernate.Criteria;
 import org.hibernate.NullPrecedence;
@@ -36,11 +36,11 @@ import org.hibernate.sql.JoinType;
 import org.hibernate.transform.Transformers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
-import org.springframework.jdbc.datasource.DataSourceUtils;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import ar.com.avaco.fwk.core.component.dto.entity.DTOEntity;
+import ar.com.avaco.fwk.core.domain.Entity;
 import ar.com.avaco.fwk.core.domain.filter.AbstractFilter;
 import ar.com.avaco.fwk.core.domain.filter.FilterData;
 
@@ -62,14 +62,102 @@ public class NJBaseRepository<ID extends Serializable, E extends ar.com.avaco.fw
 	@SuppressWarnings("unchecked")
 	@Override
 	public List<E> listFilter(AbstractFilter abstractFilter) {
-		Criteria criteria = getCurrentSession().createCriteria(getHandledClass());
-		applyFilters(criteria, abstractFilter);
-		applyPagination(criteria, abstractFilter);
-		applyOrdering(criteria, abstractFilter);
-		if (Boolean.TRUE.equals(abstractFilter.getDistinctRootEntity())) {
-			criteria.setResultTransformer(Criteria.DISTINCT_ROOT_ENTITY);
+		if (!Boolean.TRUE.equals(abstractFilter.getDistinctRootEntity())) {
+			Criteria criteria = getCurrentSession().createCriteria(getHandledClass());
+			applyFilters(criteria, abstractFilter);
+			applyOrdering(criteria, abstractFilter);
+			applyPagination(criteria, abstractFilter);
+			return criteria.list();
 		}
-		return criteria.list();
+
+		// 1. Obtener IDs únicos aplicando filtros, orden y paginación.
+		Criteria idCriteria = getCurrentSession().createCriteria(getHandledClass());
+		applyFilters(idCriteria, abstractFilter);
+
+		String[] sortFields = abstractFilter.getIdx() != null ? abstractFilter.getIdx().split(",") : new String[0];
+
+		boolean hasOrdering = abstractFilter.getAsc() != null && sortFields.length > 0;
+
+		ProjectionList projections = Projections.projectionList().add(Projections.property("id"), "id");
+
+		if (hasOrdering) {
+			int projectionIndex = 0;
+
+			for (String field : sortFields) {
+				String sortField = field.trim();
+
+				if (sortField.isEmpty()) {
+					continue;
+				}
+
+				containsAlias(idCriteria, sortField);
+
+				if (!isPropertyEmbeddable(sortField)) {
+					sortField = getAliasedProperty(sortField);
+				}
+
+				if (!"id".equals(sortField)) {
+					String projectionAlias = "sortField" + projectionIndex++;
+
+					projections.add(Projections.property(sortField), projectionAlias);
+
+					if (abstractFilter.isAsc()) {
+						idCriteria.addOrder(Order.asc(projectionAlias));
+					} else {
+						idCriteria.addOrder(Order.desc(projectionAlias));
+					}
+				}
+			}
+		}
+
+		idCriteria.setProjection(Projections.distinct(projections));
+		applyPagination(idCriteria, abstractFilter);
+
+		List<?> rows = idCriteria.list();
+		List<Long> ids = new ArrayList<>();
+
+		for (Object row : rows) {
+			Object id;
+
+			if (row instanceof Object[]) {
+				id = ((Object[]) row)[0];
+			} else {
+				id = row;
+			}
+
+			if (id instanceof Number) {
+				ids.add(((Number) id).longValue());
+			}
+		}
+
+		if (ids.isEmpty()) {
+			return new ArrayList<>();
+		}
+
+		// 2. Recuperar las entidades correspondientes a esos IDs.
+		Criteria entityCriteria = getCurrentSession().createCriteria(getHandledClass());
+		entityCriteria.add(Restrictions.in("id", ids));
+
+		List<E> entities = entityCriteria.list();
+
+		// 3. Mantener el orden de la primera consulta.
+		Map<Object, E> entitiesById = new HashMap<>();
+
+		for (E entity : entities) {
+			entitiesById.put(((Entity<?>) entity).getId(), entity);
+		}
+
+		List<E> result = new ArrayList<>();
+
+		for (Long id : ids) {
+			E entity = entitiesById.get(id);
+
+			if (entity != null) {
+				result.add(entity);
+			}
+		}
+
+		return result;
 	}
 
 	@Override
@@ -80,8 +168,8 @@ public class NJBaseRepository<ID extends Serializable, E extends ar.com.avaco.fw
 		Criteria criteria = getCurrentSession().createCriteria(getHandledClass());
 
 		applyFilters(criteria, filter);
-		applyPagination(criteria, filter);
 		applyOrdering(criteria, filter);
+		applyPagination(criteria, filter);
 
 		ProjectionList projections = resolveProjection(dtoClass, criteria);
 
@@ -161,8 +249,18 @@ public class NJBaseRepository<ID extends Serializable, E extends ar.com.avaco.fw
 	public int listCount(AbstractFilter abstractFilter) {
 		Criteria criteria = getCurrentSession().createCriteria(getHandledClass());
 		applyFilters(criteria, abstractFilter);
-		Long uniqueResult = (Long) criteria.setProjection(Projections.rowCount()).uniqueResult();
-		return uniqueResult.intValue();
+
+		Long count;
+
+		if (Boolean.TRUE.equals(abstractFilter.getDistinctRootEntity())) {
+			criteria.setProjection(Projections.countDistinct("id"));
+		} else {
+			criteria.setProjection(Projections.rowCount());
+		}
+
+		count = (Long) criteria.uniqueResult();
+
+		return count != null ? count.intValue() : 0;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -185,13 +283,34 @@ public class NJBaseRepository<ID extends Serializable, E extends ar.com.avaco.fw
 	}
 
 	protected void applyOrdering(Criteria criteria, AbstractFilter abstractFilter) {
-		if (abstractFilter.getAsc() != null && !StringUtils.isEmpty(abstractFilter.getSidx())) {
-			criteria = containsAlias(criteria, abstractFilter.getIdx());
+		if (abstractFilter.getAsc() == null || StringUtils.isEmpty(abstractFilter.getIdx())) {
+			return;
+		}
 
-			String sortField = abstractFilter.getIdx();
-			if (!isPropertyEmbeddable(sortField)) {
+		String[] sortFields = abstractFilter.getIdx().split(",");
+
+		for (String field : sortFields) {
+			String sortField = field.trim();
+
+			if (sortField.isEmpty()) {
+				continue;
+			}
+
+			System.out.println("1. CAMPO RECIBIDO: [" + sortField + "]");
+
+			System.out.println("2. ANTES containsAlias");
+			criteria = containsAlias(criteria, sortField);
+
+			System.out.println("3. ANTES isPropertyEmbeddable");
+			boolean embeddable = isPropertyEmbeddable(sortField);
+
+			System.out.println("4. EMBEDDED: " + embeddable);
+
+			if (!embeddable) {
 				sortField = getAliasedProperty(sortField);
 			}
+
+			System.out.println("5. CAMPO FINAL: [" + sortField + "]");
 
 			if (abstractFilter.isAsc()) {
 				criteria.addOrder(Order.asc(sortField).nulls(NullPrecedence.NONE));
@@ -202,7 +321,6 @@ public class NJBaseRepository<ID extends Serializable, E extends ar.com.avaco.fw
 	}
 
 	private String getAliasedProperty(String property) {
-
 		if (!property.contains(".")) {
 			return property;
 		}
@@ -219,7 +337,7 @@ public class NJBaseRepository<ID extends Serializable, E extends ar.com.avaco.fw
 			alias.append(prop[i]);
 		}
 
-		return alias.toString() + "." + prop[prop.length - 1];
+		return alias + "." + prop[prop.length - 1];
 	}
 
 	protected void applyFilters(Criteria criteria, AbstractFilter abstractFilter) {
@@ -241,6 +359,21 @@ public class NJBaseRepository<ID extends Serializable, E extends ar.com.avaco.fw
 			criteria.add(criterion);
 		}
 
+	}
+
+	@SuppressWarnings("unchecked")
+	protected List<Object> listDistinctIds(AbstractFilter abstractFilter) {
+
+		Criteria criteria = getCurrentSession().createCriteria(getHandledClass());
+
+		applyFilters(criteria, abstractFilter);
+
+		criteria.setProjection(Projections.distinct(Projections.property("id")));
+
+		applyOrdering(criteria, abstractFilter);
+		applyPagination(criteria, abstractFilter);
+
+		return criteria.list();
 	}
 
 	private Criterion createCriterion(FilterData data) {
@@ -422,6 +555,7 @@ public class NJBaseRepository<ID extends Serializable, E extends ar.com.avaco.fw
 	@Override
 	public List<E> listEqField(String field, Object value) {
 		Criteria criteria = getCurrentSession().createCriteria(getHandledClass());
+		criteria.setResultTransformer(Criteria.DISTINCT_ROOT_ENTITY);
 		if (value == null) {
 			criteria.add(Restrictions.isNull(field));
 		} else {
@@ -430,55 +564,25 @@ public class NJBaseRepository<ID extends Serializable, E extends ar.com.avaco.fw
 		return criteria.list();
 	}
 
-	
-	@Autowired
-	private DataSource dataSource;
-	
 	@Override
+	@Transactional
 	public void remove(ID id) {
+
 		E entity = findById(id).orElse(null);
 
-		System.out.println("entity = " + entity);
-		System.out.println("TX READ ONLY = " +
-		        TransactionSynchronizationManager.isCurrentTransactionReadOnly());
-		
-		Connection connection = DataSourceUtils.getConnection(dataSource);
-
-		System.out.println("Spring TX READ ONLY = "
-		        + TransactionSynchronizationManager.isCurrentTransactionReadOnly());
-
-		try {
-			System.out.println("JDBC READ ONLY = "
-			        + connection.isReadOnly());
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		try {
-			System.out.println("JDBC URL = "
-			        + connection.getMetaData().getURL());
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		System.out.println("METHOD = " +
-		        this.getClass().getName());
-
-		System.out.println("TX ACTIVE = " +
-		        TransactionSynchronizationManager.isActualTransactionActive());
-
-		System.out.println("TX READ ONLY = " +
-		        TransactionSynchronizationManager.isCurrentTransactionReadOnly());
-
-		System.out.println("TX NAME = " +
-		        TransactionSynchronizationManager.getCurrentTransactionName());
-		
 		if (entity != null) {
-			delete(entity);
+			entityManager.remove(entity);
 			entityManager.flush();
 		}
+	}
+
+	@Override
+	public E getDetached(ID id) {
+		E entidad = findById(id).orElse(null);
+		if (entidad != null) {
+			entityManager.detach(entidad);
+		}
+		return entidad;
 	}
 
 }

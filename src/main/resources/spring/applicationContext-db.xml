@@ -20,17 +20,8 @@
 							        http://www.springframework.org/schema/util
 							        http://www.springframework.org/schema/util/spring-util.xsd">
 
-	<tx:annotation-driven />
-
-	<beans:bean
-		class="org.springframework.context.support.PropertySourcesPlaceholderConfigurer">
-		<beans:property name="locations">
-			<beans:list>
-				<beans:value>file:${catalina.home}/conf/config-fwk.properties</beans:value>
-			</beans:list>
-		</beans:property>
-		<beans:property name="fileEncoding" value="UTF-8" />
-	</beans:bean>
+	<tx:annotation-driven
+		transaction-manager="transactionManager" proxy-target-class="true" />
 
 	<util:map id="dataSourceMap">
 		<beans:entry key="DB_DRIVERCLASSNAME"

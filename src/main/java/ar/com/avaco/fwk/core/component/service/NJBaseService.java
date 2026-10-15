@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import ar.com.avaco.fwk.core.component.dto.entity.DTOEntity;
@@ -18,6 +19,7 @@ import ar.com.avaco.fwk.core.domain.filter.AbstractFilter;
  * 
  * @author gaston.ortiz@sofrecom.com.ar
  */
+@Transactional
 public abstract class NJBaseService<ID extends Serializable, T extends Entity<ID>, R extends NJRepository<ID, T>>
 		implements NJService<ID, T> {
 
@@ -67,8 +69,6 @@ public abstract class NJBaseService<ID extends Serializable, T extends Entity<ID
 	 * @see NJService#remove(Serializable)
 	 */
 	public void remove(ID id) {
-		 System.out.println("TX READ ONLY = " +
-			        TransactionSynchronizationManager.isCurrentTransactionReadOnly());
 		getRepository().remove(id);
 	}
 
@@ -92,7 +92,7 @@ public abstract class NJBaseService<ID extends Serializable, T extends Entity<ID
 	 * 
 	 * @return {@link NJRepository} The repository.
 	 */
-	protected final R getRepository() {
+	protected R getRepository() {
 		return this.repository;
 	}
 	
@@ -116,7 +116,12 @@ public abstract class NJBaseService<ID extends Serializable, T extends Entity<ID
 	public boolean exists(ID id) {
 		return getRepository().existsById(id);
 	}
-	
+
+	@Override
+	public T getDetached(ID id) {
+	    T entidad = getRepository().findById(id).orElse(null);
+	    return entidad;
+	}
 	
 
 	

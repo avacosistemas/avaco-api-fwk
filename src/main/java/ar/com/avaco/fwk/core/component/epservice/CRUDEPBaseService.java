@@ -6,7 +6,9 @@ import java.util.Collection;
 import java.util.List;
 
 import org.modelmapper.ModelMapper;
+import org.springframework.transaction.annotation.Transactional;
 
+import ar.com.avaco.fwk.core.component.dto.CustomDTO;
 import ar.com.avaco.fwk.core.component.dto.PageDTO;
 import ar.com.avaco.fwk.core.component.dto.entity.DTOEntity;
 import ar.com.avaco.fwk.core.component.service.NJService;
@@ -14,6 +16,7 @@ import ar.com.avaco.fwk.core.domain.Entity;
 import ar.com.avaco.fwk.core.domain.filter.AbstractFilter;
 import ar.com.avaco.fwk.core.exception.BusinessException;
 
+@Transactional
 public abstract class CRUDEPBaseService<ID extends Serializable, DTO extends DTOEntity<ID>, T extends Entity<ID>, S extends NJService<ID, T>>
 		implements CRUDEPService<ID, DTO> {
 
@@ -87,7 +90,8 @@ public abstract class CRUDEPBaseService<ID extends Serializable, DTO extends DTO
 
 	@Override
 	public List<DTO> listFilter(AbstractFilter abstractFilter) {
-		return convertToDtos(service.listFilter(abstractFilter));
+		List<T> listFilter = service.listFilter(abstractFilter);
+		return convertToDtos(listFilter);
 	}
 
 	@Override
@@ -157,6 +161,35 @@ public abstract class CRUDEPBaseService<ID extends Serializable, DTO extends DTO
 		page.setList(listFilter);
 		page.setTotalReg(listCount);
 		return page;
+	}
+	
+	@Override
+	public <E, CDTO extends DTOEntity<?> & CustomDTO<E>> PageDTO<CDTO> listFilterCountCustom(
+	        AbstractFilter abstractFilter, Class<CDTO> cdto) {
+
+	    List<T> listFilter = service.listFilter(abstractFilter);
+
+	    int listCount = service.listCount(abstractFilter);
+
+	    List<CDTO> result = new ArrayList<>();
+
+	    try {
+	        for (T entity : listFilter) {
+	            CDTO dto = cdto.getDeclaredConstructor().newInstance();
+	            dto.fromEntity((E) entity);
+	            result.add(dto);
+	        }
+	    } catch (ReflectiveOperationException e) {
+	        throw new RuntimeException(
+	                "No se pudo instanciar el DTO " + cdto.getName(), e);
+	    }
+
+	    return new PageDTO<>(
+	            result,
+	            listCount,
+	            abstractFilter.getRows(),
+	            abstractFilter.getFirst()
+	    );
 	}
 	
 	@Override

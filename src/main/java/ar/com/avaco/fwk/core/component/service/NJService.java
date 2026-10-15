@@ -84,6 +84,8 @@ public interface NJService<ID extends Serializable, T extends Entity<ID>> {
 			Class<D> targetDTO);
 
 	boolean exists(ID id);
+
+	T getDetached(ID id);
 	
 	
 }
